@@ -1,7 +1,6 @@
 import os
-from PyQt5 import QtGui
 from PyQt5.QtCore import Qt, QPropertyAnimation, QPoint, QTimer, QSize
-from PyQt5.QtGui import QPixmap, QIcon
+from PyQt5.QtGui import QPixmap, QIcon, QColor, QFont, QImage, qRgba
 from PyQt5.QtWidgets import QDialog, QPushButton, QLabel, QGraphicsOpacityEffect, QWidget, QHBoxLayout, QVBoxLayout, QApplication
 
 
@@ -39,6 +38,13 @@ class ToastNotification(QDialog):
         self.fade_out_duration = 250
         self.reset_countdown_on_hover = True
         self.stay_on_top = False
+        self.background_color = QColor('#E7F4F9')
+        self.title_color = QColor('#000000')
+        self.text_color = QColor('#515151')
+        self.icon_color = QColor('#228b22')
+        self.icon_separator_color = QColor('#D9D9D9')
+        self.close_button_color = QColor('#000000')
+        self.duration_bar_color = QColor('#228b22')
 
         self.elapsed_time = 0
 
@@ -49,24 +55,23 @@ class ToastNotification(QDialog):
 
         # Notification widget
         self.notification = QWidget(self)
-        self.notification.setStyleSheet('background: #E7F4F9; border-radius: 3px;')
 
         # Opacity effect for fading animations
         self.opacity_effect = QGraphicsOpacityEffect()
         self.opacity_effect.setOpacity(1)
         self.notification.setGraphicsEffect(self.opacity_effect)
 
-        # Hide button
-        self.hide_button = QPushButton(self.notification)
-        self.hide_button.setIcon(QIcon(ToastNotification.__get_directory() + '/icons/cross.png'))
-        self.hide_button.setIconSize(QSize(10, 10))
-        self.hide_button.setFixedSize(24, 24)
-        self.hide_button.setCursor(Qt.PointingHandCursor)
-        self.hide_button.clicked.connect(self.__fade_out)
-        self.hide_button.setStyleSheet('background: transparent;')
+        # Close button
+        self.close_button = QPushButton(self.notification)
+        self.close_button.setIcon(QIcon(ToastNotification.__get_directory() + '/icons/cross.png'))
+        self.close_button.setIconSize(QSize(10, 10))
+        self.close_button.setFixedSize(24, 24)
+        self.close_button.setCursor(Qt.PointingHandCursor)
+        self.close_button.clicked.connect(self.__fade_out)
+        self.close_button.setStyleSheet('background: transparent;')
 
         # Title label
-        title_font = QtGui.QFont()
+        title_font = QFont()
         title_font.setFamily('Arial')
         title_font.setPointSize(9)
         title_font.setBold(True)
@@ -74,11 +79,10 @@ class ToastNotification(QDialog):
         self.title_label.setFont(title_font)
 
         # Text label
-        text_font = QtGui.QFont()
+        text_font = QFont()
         text_font.setFamily('Arial')
         text_font.setPointSize(9)
         self.text_label = QLabel(self.notification)
-        self.text_label.setStyleSheet('color: #515151;')
         self.text_label.setFont(text_font)
 
         # Icon
@@ -90,7 +94,6 @@ class ToastNotification(QDialog):
         # Icon separator
         self.icon_separator = QWidget(self.notification)
         self.icon_separator.setFixedWidth(2)
-        self.icon_separator.setStyleSheet('background: #D9D9D9;')
 
         # Duration bar container (used to make border radius possible on 4 px high widget)
         self.duration_bar_container = QWidget(self.notification)
@@ -101,46 +104,53 @@ class ToastNotification(QDialog):
         self.duration_bar = QWidget(self.duration_bar_container)
         self.duration_bar.setFixedHeight(20)
         self.duration_bar.move(0, -16)
-        self.duration_bar.setStyleSheet('background: rgba(34, 139, 34, 100); border-radius: 3px;')
 
         # Duration bar chunk
         self.duration_bar_chunk = QWidget(self.duration_bar_container)
         self.duration_bar_chunk.setFixedHeight(20)
         self.duration_bar_chunk.move(0, -16)
-        self.duration_bar_chunk.setStyleSheet('background: rgba(34, 139, 34, 255); border-bottom-left-radius: 3px; border-bottom-right-radius: 0px;')
 
         # Layout for icon and separator
-        icon_layout = QHBoxLayout()
-        icon_layout.addWidget(self.icon_label)
-        icon_layout.addWidget(self.icon_separator)
-        icon_layout.setSpacing(12)
-        icon_layout.setContentsMargins(10, 0, 8, 0)
+        self.icon_layout = QHBoxLayout()
+        self.icon_layout.addWidget(self.icon_label)
+        self.icon_layout.addWidget(self.icon_separator)
+        self.icon_layout.setSpacing(12)
+        self.icon_layout.setContentsMargins(10, 0, 8, 0)
 
         # Layout for title and text
-        text_layout = QVBoxLayout()
-        text_layout.addWidget(self.title_label)
-        text_layout.addWidget(self.text_label)
-        text_layout.setAlignment(Qt.AlignVCenter)
-        text_layout.setContentsMargins(0, 8, 15, 8)
+        self.text_layout = QVBoxLayout()
+        self.text_layout.addWidget(self.title_label)
+        self.text_layout.addWidget(self.text_label)
+        self.text_layout.setAlignment(Qt.AlignVCenter)
+        self.text_layout.setContentsMargins(0, 8, 15, 8)
 
-        # Layout for hide button
-        button_layout = QVBoxLayout()
-        button_layout.addWidget(self.hide_button)
-        button_layout.setAlignment(Qt.AlignTop)
+        # Layout for close button
+        self.button_layout = QVBoxLayout()
+        self.button_layout.addWidget(self.close_button)
+        self.button_layout.setAlignment(Qt.AlignTop)
 
         # Layout to combine everything
-        main_layout = QHBoxLayout(self.notification)
-        main_layout.addLayout(icon_layout)
-        main_layout.addLayout(text_layout)
-        main_layout.addLayout(button_layout)
-        main_layout.setContentsMargins(8, 8, 8, 12)
+        self.main_layout = QHBoxLayout()
+        self.main_layout.addLayout(self.icon_layout)
+        self.main_layout.addLayout(self.text_layout)
+        self.main_layout.addLayout(self.button_layout)
+        self.main_layout.setContentsMargins(8, 8, 8, 12)
 
         # Set main layout
-        self.notification.setLayout(main_layout)
+        self.notification.setLayout(self.main_layout)
+
+        # Set default colors
+        self.setBackgroundColor(self.background_color)
+        self.setTitleColor(self.title_color)
+        self.setTextColor(self.text_color)
+        self.setIconColor(self.icon_color)
+        self.setIconSeparatorColor(self.icon_separator_color)
+        self.setCloseButtonColor(self.close_button_color)
+        self.setDurationBarColor(self.duration_bar_color)
 
         # Timer for hiding the notification after set duration
         self.duration_timer = QTimer(self)
-        self.duration_timer.timeout.connect(self.__fade_out)
+        self.duration_timer.timeout.connect(self.hide)
 
         # Timer for updating the duration bar
         self.duration_bar_timer = QTimer(self)
@@ -210,14 +220,14 @@ class ToastNotification(QDialog):
             x, y = self.__calculate_position()
 
             if len(ToastNotification.currently_shown) != 1:
-                if ToastNotification.position == ToastNotification.BOTTOM_RIGHT \
-                        or ToastNotification.position == ToastNotification.BOTTOM_LEFT \
-                        or ToastNotification.position == ToastNotification.BOTTOM_MIDDLE:
+                if (ToastNotification.position == ToastNotification.BOTTOM_RIGHT
+                        or ToastNotification.position == ToastNotification.BOTTOM_LEFT
+                        or ToastNotification.position == ToastNotification.BOTTOM_MIDDLE):
                     self.move(x, y - int(self.height() / 1.5))
 
-                elif ToastNotification.position == ToastNotification.TOP_RIGHT \
-                        or ToastNotification.position == ToastNotification.TOP_LEFT \
-                        or ToastNotification.position == ToastNotification.TOP_MIDDLE:
+                elif (ToastNotification.position == ToastNotification.TOP_RIGHT
+                        or ToastNotification.position == ToastNotification.TOP_LEFT
+                        or ToastNotification.position == ToastNotification.TOP_MIDDLE):
                     self.move(x, y + int(self.height() / 1.5))
 
                 self.pos_animation = QPropertyAnimation(self, b"pos")
@@ -248,7 +258,7 @@ class ToastNotification(QDialog):
     def hide(self):
         if self.duration != 0:
             self.duration_timer.stop()
-        self.fade_out()
+        self.__fade_out()
 
     def __fade_out(self):
         self.fade_out_animation = QPropertyAnimation(self.opacity_effect, b"opacity")
@@ -384,6 +394,29 @@ class ToastNotification(QDialog):
         self.text = text
         self.text_label.setText(text)
 
+    def setBorderRadius(self, border_radius: int):
+        self.border_radius = border_radius
+
+        self.notification.setStyleSheet('background: {};'
+                                        'border-radius: {}px;'
+                                        .format(self.background_color.name(),
+                                                self.border_radius))
+
+        self.duration_bar.setStyleSheet('background: rgba({}, {}, {}, 100);'
+                                        'border-radius: {}px;'
+                                        .format(self.duration_bar_color.red(),
+                                                self.duration_bar_color.green(),
+                                                self.duration_bar_color.blue(),
+                                                self.border_radius))
+
+        self.duration_bar_chunk.setStyleSheet('background: rgba({}, {}, {}, 255);'
+                                              'border-bottom-left-radius: {}px;'
+                                              'border-bottom-right-radius: 0px;'
+                                              .format(self.duration_bar_color.red(),
+                                                      self.duration_bar_color.green(),
+                                                      self.duration_bar_color.blue(),
+                                                      self.border_radius))
+
     def setStayOnTop(self, on: bool):
         self.stay_on_top = on
         if on:
@@ -395,6 +428,77 @@ class ToastNotification(QDialog):
             self.setWindowFlags(Qt.Window |
                                 Qt.CustomizeWindowHint |
                                 Qt.FramelessWindowHint)
+
+    def setBackgroundColor(self, background_color: QColor):
+        self.background_color = background_color
+
+        self.notification.setStyleSheet('background: {};'
+                                        'border-radius: {}px;'
+                                        .format(background_color.name(),
+                                                self.border_radius))
+
+    def setTitleColor(self, title_color: QColor):
+        self.title_color = title_color
+        self.title_label.setStyleSheet('color: {};'.format(title_color.name()))
+
+    def setTextColor(self, text_color: QColor):
+        self.text_color = text_color
+        self.text_label.setStyleSheet('color: {};'.format(text_color.name()))
+
+    def setIconColor(self, icon_color: QColor):
+        self.icon_color = icon_color
+
+        recolored_image = self.__recolor_image(self.icon_label.pixmap().toImage(),
+                                               self.icon_label.width(),
+                                               self.icon_label.height(),
+                                               icon_color)
+        self.icon_label.setPixmap(QPixmap(recolored_image))
+
+    def setIconSeparatorColor(self, icon_separator_color: QColor):
+        self.icon_separator_color = icon_separator_color
+        self.icon_separator.setStyleSheet('background: {};'
+                                          .format(icon_separator_color.name()))
+
+    def setCloseButtonColor(self, close_button_color: QColor):
+        self.close_button_color = close_button_color
+
+        recolored_image = self.__recolor_image(self.close_button.icon().pixmap(
+                                               self.close_button.iconSize()).toImage(),
+                                               self.close_button.iconSize().width(),
+                                               self.close_button.iconSize().height(),
+                                               close_button_color)
+        self.close_button.setIcon(QIcon(QPixmap(recolored_image)))
+
+    def setDurationBarColor(self, duration_bar_color: QColor):
+        self.duration_bar_color = duration_bar_color
+
+        self.duration_bar.setStyleSheet('background: rgba({}, {}, {}, 100);'
+                                        'border-radius: {}px;'
+                                        .format(duration_bar_color.red(),
+                                                duration_bar_color.green(),
+                                                duration_bar_color.blue(),
+                                                self.border_radius))
+
+        self.duration_bar_chunk.setStyleSheet('background: rgba({}, {}, {}, 255);'
+                                              'border-bottom-left-radius: {}px;'
+                                              'border-bottom-right-radius: 0px;'
+                                              .format(duration_bar_color.red(),
+                                                      duration_bar_color.green(),
+                                                      duration_bar_color.blue(),
+                                                      self.border_radius))
+
+    @staticmethod
+    def __recolor_image(image: QImage, width: int, height: int, color: QColor):
+        for x in range(0, width):
+            for y in range(0, height):
+                current_color = image.pixelColor(x, y)
+                new_color_r = color.red()
+                new_color_g = color.green()
+                new_color_b = color.blue()
+                new_color = QColor.fromRgba(
+                    qRgba(new_color_r, new_color_g, new_color_b, current_color.alpha()))
+                image.setPixelColor(x, y, new_color)
+        return image
 
     @staticmethod
     def __get_directory():
