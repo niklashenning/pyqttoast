@@ -6,13 +6,22 @@ from PyQt5.QtWidgets import QDialog, QPushButton, QLabel, QGraphicsOpacityEffect
 
 
 class ToastNotification(QDialog):
+    # Positions Enum
+    BOTTOM_RIGHT = 0
+    BOTTOM_LEFT = 1
+    BOTTOM_MIDDLE = 2
+    TOP_RIGHT = 3
+    TOP_LEFT = 4
+    TOP_MIDDLE = 5
 
-    # Static
-    currently_shown = []
-    queue = []
+    # Static variables
     max_stacked_notifications = 3
     notification_spacing = 10
     always_on_main_screen = False
+    position = BOTTOM_RIGHT
+
+    currently_shown = []
+    queue = []
 
     DURATION_BAR_UPDATE_INTERVAL = 10
 
@@ -20,7 +29,7 @@ class ToastNotification(QDialog):
 
         super(ToastNotification, self).__init__(parent)
 
-        # Init settings
+        # Init attributes
         self.duration = 5000
         self.showing_duration_bar = True
         self.title = ''
@@ -31,7 +40,6 @@ class ToastNotification(QDialog):
         self.reset_countdown_on_hover = True
         self.stay_on_top = False
 
-        # Other variables
         self.elapsed_time = 0
 
         # Window settings
@@ -202,7 +210,16 @@ class ToastNotification(QDialog):
             x, y = self.__calculate_position()
 
             if len(ToastNotification.currently_shown) != 1:
-                self.move(x, y - int(self.height() / 1.5))
+                if ToastNotification.position == ToastNotification.BOTTOM_RIGHT \
+                        or ToastNotification.position == ToastNotification.BOTTOM_LEFT \
+                        or ToastNotification.position == ToastNotification.BOTTOM_MIDDLE:
+                    self.move(x, y - int(self.height() / 1.5))
+
+                elif ToastNotification.position == ToastNotification.TOP_RIGHT \
+                        or ToastNotification.position == ToastNotification.TOP_LEFT \
+                        or ToastNotification.position == ToastNotification.TOP_MIDDLE:
+                    self.move(x, y + int(self.height() / 1.5))
+
                 self.pos_animation = QPropertyAnimation(self, b"pos")
                 self.pos_animation.setEndValue(QPoint(x, y))
                 self.pos_animation.setDuration(250)
@@ -313,10 +330,48 @@ class ToastNotification(QDialog):
                         break
 
         # Calculate x and y position of notification
-        x = current_screen.geometry().width() - self.width() - 20 + current_screen.geometry().x()
-        y = current_screen.geometry().height() - ToastNotification.currently_shown[0].height() \
-            - 40 + current_screen.geometry().y() - y_offset
-        return x, y
+        if ToastNotification.position == ToastNotification.BOTTOM_RIGHT:
+            x = (current_screen.geometry().width() - self.width()
+                 - 20 + current_screen.geometry().x())
+            y = (current_screen.geometry().height()
+                 - ToastNotification.currently_shown[0].height()
+                 - 40 + current_screen.geometry().y() - y_offset)
+
+        elif ToastNotification.position == ToastNotification.BOTTOM_LEFT:
+            x = current_screen.geometry().x() + 20
+            y = (current_screen.geometry().height()
+                 - ToastNotification.currently_shown[0].height()
+                 - 40 + current_screen.geometry().y() - y_offset)
+
+        elif ToastNotification.position == ToastNotification.BOTTOM_MIDDLE:
+            x = (current_screen.geometry().x()
+                 + current_screen.geometry().width() / 2 - self.width() / 2)
+            y = (current_screen.geometry().height()
+                 - ToastNotification.currently_shown[0].height()
+                 - 40 + current_screen.geometry().y() - y_offset)
+
+        elif ToastNotification.position == ToastNotification.TOP_RIGHT:
+            x = (current_screen.geometry().width() - self.width()
+                 - 20 + current_screen.geometry().x())
+            y = (current_screen.geometry().y()
+                 + ToastNotification.currently_shown[0].height()
+                 + 40 + y_offset)
+
+        elif ToastNotification.position == ToastNotification.TOP_LEFT:
+            x = current_screen.geometry().x() + 20
+            y = (current_screen.geometry().y()
+                 + ToastNotification.currently_shown[0].height()
+                 + 40 + y_offset)
+
+        elif ToastNotification.position == ToastNotification.TOP_MIDDLE:
+            x = (current_screen.geometry().x()
+                 + current_screen.geometry().width() / 2
+                 - self.width() / 2)
+            y = (current_screen.geometry().y()
+                 + ToastNotification.currently_shown[0].height()
+                 + 40 + y_offset)
+
+        return int(x), int(y)
 
     def setDuration(self, duration: int):
         self.duration = duration
@@ -332,13 +387,28 @@ class ToastNotification(QDialog):
     def setStayOnTop(self, on: bool):
         self.stay_on_top = on
         if on:
-            self.setWindowFlags(Qt.Window | Qt.CustomizeWindowHint | Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
+            self.setWindowFlags(Qt.Window |
+                                Qt.CustomizeWindowHint |
+                                Qt.FramelessWindowHint |
+                                Qt.WindowStaysOnTopHint)
         else:
-            self.setWindowFlags(Qt.Window | Qt.CustomizeWindowHint | Qt.FramelessWindowHint)
+            self.setWindowFlags(Qt.Window |
+                                Qt.CustomizeWindowHint |
+                                Qt.FramelessWindowHint)
 
     @staticmethod
     def __get_directory():
         return os.path.dirname(os.path.realpath(__file__))
+
+    @staticmethod
+    def setPosition(position: int):
+        if (position == ToastNotification.BOTTOM_RIGHT
+                or position == ToastNotification.BOTTOM_LEFT
+                or position == ToastNotification.BOTTOM_MIDDLE
+                or position == ToastNotification.TOP_RIGHT
+                or position == ToastNotification.TOP_LEFT
+                or position == ToastNotification.TOP_MIDDLE):
+            ToastNotification.position = position
 
     @staticmethod
     def setMaxStackedNotifications(max_stacked_notifications: int):
