@@ -5,13 +5,18 @@ from PyQt5.QtWidgets import QDialog, QPushButton, QLabel, QGraphicsOpacityEffect
 
 
 class ToastNotification(QDialog):
-    # Positions Enum
+    # Positions enum
     BOTTOM_RIGHT = 0
     BOTTOM_LEFT = 1
     BOTTOM_MIDDLE = 2
     TOP_RIGHT = 3
     TOP_LEFT = 4
     TOP_MIDDLE = 5
+
+    # Close button alignment enum
+    CLOSE_BUTTON_TOP = 0
+    CLOSE_BUTTON_MIDDLE = 1
+    CLOSE_BUTTON_BOTTOM = 2
 
     # Static variables
     max_stacked_notifications = 3
@@ -52,6 +57,10 @@ class ToastNotification(QDialog):
         self.text_font = QFont()
         self.text_font.setFamily('Arial')
         self.text_font.setPointSize(9)
+        self.close_button_icon = QIcon(ToastNotification.__get_directory() + '/icons/cross.png')
+        self.close_button_icon_size = QSize(10, 10)
+        self.close_button_size = QSize(24, 24)
+        self.close_button_alignment = ToastNotification.CLOSE_BUTTON_TOP
 
         self.elapsed_time = 0
 
@@ -70,9 +79,6 @@ class ToastNotification(QDialog):
 
         # Close button
         self.close_button = QPushButton(self.notification)
-        self.close_button.setIcon(QIcon(ToastNotification.__get_directory() + '/icons/cross.png'))
-        self.close_button.setIconSize(QSize(10, 10))
-        self.close_button.setFixedSize(24, 24)
         self.close_button.setCursor(Qt.PointingHandCursor)
         self.close_button.clicked.connect(self.__fade_out)
         self.close_button.setStyleSheet('background: transparent;')
@@ -125,7 +131,6 @@ class ToastNotification(QDialog):
         # Layout for close button
         self.button_layout = QVBoxLayout()
         self.button_layout.addWidget(self.close_button)
-        self.button_layout.setAlignment(Qt.AlignTop)
 
         # Layout to combine everything
         self.main_layout = QHBoxLayout()
@@ -147,6 +152,10 @@ class ToastNotification(QDialog):
         self.setDurationBarColor(self.duration_bar_color)
         self.setTitleFont(self.title_font)
         self.setTextFont(self.text_font)
+        self.setCloseButtonIcon(self.close_button_icon)
+        self.setCloseButtonIconSize(self.close_button_icon_size)
+        self.setCloseButtonSize(self.close_button_size)
+        self.setCloseButtonAlignment(self.close_button_alignment)
 
         # Timer for hiding the notification after set duration
         self.duration_timer = QTimer(self)
@@ -497,6 +506,31 @@ class ToastNotification(QDialog):
     def setTextFont(self, text_font: QFont):
         self.text_font = text_font
         self.text_label.setFont(text_font)
+
+    def setCloseButtonIcon(self, icon: QIcon):
+        self.close_button_icon = icon
+        self.close_button.setIcon(icon)
+
+    def setCloseButtonIconSize(self, size: QSize):
+        self.close_button_icon_size = size
+        self.close_button.setIconSize(size)
+
+    def setCloseButtonSize(self, size: QSize):
+        self.close_button_size = size
+        self.close_button.setFixedSize(size)
+
+    def setCloseButtonAlignment(self, alignment: int):
+        if (alignment == ToastNotification.CLOSE_BUTTON_TOP
+                or alignment == ToastNotification.CLOSE_BUTTON_MIDDLE
+                or alignment == ToastNotification.CLOSE_BUTTON_BOTTOM):
+            self.close_button_alignment = alignment
+
+        if alignment == ToastNotification.CLOSE_BUTTON_TOP:
+            self.button_layout.setAlignment(Qt.AlignTop)
+        elif alignment == ToastNotification.CLOSE_BUTTON_MIDDLE:
+            self.button_layout.setAlignment(Qt.AlignVCenter)
+        elif alignment == ToastNotification.CLOSE_BUTTON_BOTTOM:
+            self.button_layout.setAlignment(Qt.AlignBottom)
 
     @staticmethod
     def __recolor_image(image: QImage, width: int, height: int, color: QColor):
