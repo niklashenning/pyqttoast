@@ -45,6 +45,13 @@ class ToastNotification(QDialog):
         self.icon_separator_color = QColor('#D9D9D9')
         self.close_button_color = QColor('#000000')
         self.duration_bar_color = QColor('#228b22')
+        self.title_font = QFont()
+        self.title_font.setFamily('Arial')
+        self.title_font.setPointSize(9)
+        self.title_font.setBold(True)
+        self.text_font = QFont()
+        self.text_font.setFamily('Arial')
+        self.text_font.setPointSize(9)
 
         self.elapsed_time = 0
 
@@ -59,7 +66,7 @@ class ToastNotification(QDialog):
         # Opacity effect for fading animations
         self.opacity_effect = QGraphicsOpacityEffect()
         self.opacity_effect.setOpacity(1)
-        self.notification.setGraphicsEffect(self.opacity_effect)
+        self.setGraphicsEffect(self.opacity_effect)
 
         # Close button
         self.close_button = QPushButton(self.notification)
@@ -71,19 +78,10 @@ class ToastNotification(QDialog):
         self.close_button.setStyleSheet('background: transparent;')
 
         # Title label
-        title_font = QFont()
-        title_font.setFamily('Arial')
-        title_font.setPointSize(9)
-        title_font.setBold(True)
         self.title_label = QLabel(self.notification)
-        self.title_label.setFont(title_font)
 
         # Text label
-        text_font = QFont()
-        text_font.setFamily('Arial')
-        text_font.setPointSize(9)
         self.text_label = QLabel(self.notification)
-        self.text_label.setFont(text_font)
 
         # Icon
         icon_pixmap = QPixmap(ToastNotification.__get_directory() + '/icons/check-mark.png')
@@ -147,6 +145,8 @@ class ToastNotification(QDialog):
         self.setIconSeparatorColor(self.icon_separator_color)
         self.setCloseButtonColor(self.close_button_color)
         self.setDurationBarColor(self.duration_bar_color)
+        self.setTitleFont(self.title_font)
+        self.setTextFont(self.text_font)
 
         # Timer for hiding the notification after set duration
         self.duration_timer = QTimer(self)
@@ -417,6 +417,9 @@ class ToastNotification(QDialog):
                                                       self.duration_bar_color.blue(),
                                                       self.border_radius))
 
+    def setResetCountdownOnHover(self, on: bool):
+        self.reset_countdown_on_hover = on
+
     def setStayOnTop(self, on: bool):
         self.stay_on_top = on
         if on:
@@ -487,11 +490,22 @@ class ToastNotification(QDialog):
                                                       duration_bar_color.blue(),
                                                       self.border_radius))
 
+    def setTitleFont(self, title_font: QFont):
+        self.title_font = title_font
+        self.title_label.setFont(title_font)
+
+    def setTextFont(self, text_font: QFont):
+        self.text_font = text_font
+        self.text_label.setFont(text_font)
+
     @staticmethod
     def __recolor_image(image: QImage, width: int, height: int, color: QColor):
+        # Loop through every pixel
         for x in range(0, width):
             for y in range(0, height):
+                # Get current color of the pixel
                 current_color = image.pixelColor(x, y)
+                # Replace the rgb values with rgb of new color and keep alpha the same
                 new_color_r = color.red()
                 new_color_g = color.green()
                 new_color_b = color.blue()
