@@ -412,7 +412,118 @@ class ToastNotification(QDialog):
 
     def setBorderRadius(self, border_radius: int):
         self.border_radius = border_radius
+        self.__update_stylesheet()
 
+    def setFadeInDuration(self, duration: int):
+        self.fade_in_duration = duration
+
+    def setFadeOutDuration(self, duration: int):
+        self.fade_out_duration = duration
+
+    def setResetCountdownOnHover(self, on: bool):
+        self.reset_countdown_on_hover = on
+
+    def setStayOnTop(self, on: bool):
+        self.stay_on_top = on
+        if on:
+            self.setWindowFlags(Qt.Window |
+                                Qt.CustomizeWindowHint |
+                                Qt.FramelessWindowHint |
+                                Qt.WindowStaysOnTopHint)
+        else:
+            self.setWindowFlags(Qt.Window |
+                                Qt.CustomizeWindowHint |
+                                Qt.FramelessWindowHint)
+
+    def setBackgroundColor(self, color: QColor):
+        self.background_color = color
+        self.__update_stylesheet()
+
+    def setTitleColor(self, color: QColor):
+        self.title_color = color
+        self.__update_stylesheet()
+
+    def setTextColor(self, color: QColor):
+        self.text_color = color
+        self.__update_stylesheet()
+
+    def setIconColor(self, color: QColor):
+        self.icon_color = color
+
+        recolored_image = self.__recolor_image(self.icon_label.pixmap().toImage(),
+                                               self.icon_label.width(),
+                                               self.icon_label.height(),
+                                               color)
+        self.icon_label.setPixmap(QPixmap(recolored_image))
+
+    def setIconSeparatorColor(self, color: QColor):
+        self.icon_separator_color = color
+        self.__update_stylesheet()
+
+    def setCloseButtonColor(self, color: QColor):
+        self.close_button_color = color
+
+        recolored_image = self.__recolor_image(self.close_button.icon().pixmap(
+                                               self.close_button.iconSize()).toImage(),
+                                               self.close_button.iconSize().width(),
+                                               self.close_button.iconSize().height(),
+                                               color)
+        self.close_button.setIcon(QIcon(QPixmap(recolored_image)))
+
+    def setDurationBarColor(self, color: QColor):
+        self.duration_bar_color = color
+        self.__update_stylesheet()
+
+    def setTitleFont(self, font: QFont):
+        self.title_font = font
+        self.title_label.setFont(font)
+
+    def setTextFont(self, font: QFont):
+        self.text_font = font
+        self.text_label.setFont(font)
+
+    def setCloseButtonIcon(self, icon: QIcon):
+        self.close_button_icon = icon
+        self.close_button.setIcon(icon)
+
+    def setCloseButtonIconSize(self, size: QSize):
+        self.close_button_icon_size = size
+        self.close_button.setIconSize(size)
+
+    def setCloseButtonIconWidth(self, width: int):
+        self.close_button_icon_size.setWidth(width)
+        self.close_button.setIconSize(self.close_button_icon_size)
+
+    def setCloseButtonIconHeight(self, height: int):
+        self.close_button_icon_size.setHeight(height)
+        self.close_button.setIconSize(self.close_button_icon_size)
+
+    def setCloseButtonSize(self, size: QSize):
+        self.close_button_size = size
+        self.close_button.setFixedSize(size)
+
+    def setCloseButtonWidth(self, width: int):
+        self.close_button_size.setWidth(width)
+        self.close_button.setFixedSize(self.close_button_size)
+
+    def setCloseButtonHeight(self, height: int):
+        self.close_button_size.setHeight(height)
+        self.close_button.setFixedSize(self.close_button_size)
+
+    def setCloseButtonAlignment(self, alignment: int):
+        if (alignment == ToastNotification.CLOSE_BUTTON_TOP
+                or alignment == ToastNotification.CLOSE_BUTTON_MIDDLE
+                or alignment == ToastNotification.CLOSE_BUTTON_BOTTOM):
+            self.close_button_alignment = alignment
+
+        if alignment == ToastNotification.CLOSE_BUTTON_TOP:
+            self.button_layout.setAlignment(Qt.AlignTop)
+        elif alignment == ToastNotification.CLOSE_BUTTON_MIDDLE:
+            self.button_layout.setAlignment(Qt.AlignVCenter)
+        elif alignment == ToastNotification.CLOSE_BUTTON_BOTTOM:
+            self.button_layout.setAlignment(Qt.AlignBottom)
+
+    def __update_stylesheet(self):
         self.notification.setStyleSheet('background: {};'
                                         'border-radius: {}px;'
                                         .format(self.background_color.name(),
@@ -433,117 +544,11 @@ class ToastNotification(QDialog):
                                                       self.duration_bar_color.blue(),
                                                       self.border_radius))
 
-    def setFadeInDuration(self, milliseconds: int):
-        self.fade_in_duration = milliseconds
-
-    def setFadeOutDuration(self, milliseconds: int):
-        self.fade_out_duration = milliseconds
-
-    def setResetCountdownOnHover(self, on: bool):
-        self.reset_countdown_on_hover = on
-
-    def setStayOnTop(self, on: bool):
-        self.stay_on_top = on
-        if on:
-            self.setWindowFlags(Qt.Window |
-                                Qt.CustomizeWindowHint |
-                                Qt.FramelessWindowHint |
-                                Qt.WindowStaysOnTopHint)
-        else:
-            self.setWindowFlags(Qt.Window |
-                                Qt.CustomizeWindowHint |
-                                Qt.FramelessWindowHint)
-
-    def setBackgroundColor(self, background_color: QColor):
-        self.background_color = background_color
-
-        self.notification.setStyleSheet('background: {};'
-                                        'border-radius: {}px;'
-                                        .format(background_color.name(),
-                                                self.border_radius))
-
-    def setTitleColor(self, title_color: QColor):
-        self.title_color = title_color
-        self.title_label.setStyleSheet('color: {};'.format(title_color.name()))
-
-    def setTextColor(self, text_color: QColor):
-        self.text_color = text_color
-        self.text_label.setStyleSheet('color: {};'.format(text_color.name()))
-
-    def setIconColor(self, icon_color: QColor):
-        self.icon_color = icon_color
-
-        recolored_image = self.__recolor_image(self.icon_label.pixmap().toImage(),
-                                               self.icon_label.width(),
-                                               self.icon_label.height(),
-                                               icon_color)
-        self.icon_label.setPixmap(QPixmap(recolored_image))
-
-    def setIconSeparatorColor(self, icon_separator_color: QColor):
-        self.icon_separator_color = icon_separator_color
         self.icon_separator.setStyleSheet('background: {};'
-                                          .format(icon_separator_color.name()))
+                                          .format(self.icon_separator_color.name()))
 
-    def setCloseButtonColor(self, close_button_color: QColor):
-        self.close_button_color = close_button_color
-
-        recolored_image = self.__recolor_image(self.close_button.icon().pixmap(
-                                               self.close_button.iconSize()).toImage(),
-                                               self.close_button.iconSize().width(),
-                                               self.close_button.iconSize().height(),
-                                               close_button_color)
-        self.close_button.setIcon(QIcon(QPixmap(recolored_image)))
-
-    def setDurationBarColor(self, duration_bar_color: QColor):
-        self.duration_bar_color = duration_bar_color
-
-        self.duration_bar.setStyleSheet('background: rgba({}, {}, {}, 100);'
-                                        'border-radius: {}px;'
-                                        .format(duration_bar_color.red(),
-                                                duration_bar_color.green(),
-                                                duration_bar_color.blue(),
-                                                self.border_radius))
-
-        self.duration_bar_chunk.setStyleSheet('background: rgba({}, {}, {}, 255);'
-                                              'border-bottom-left-radius: {}px;'
-                                              'border-bottom-right-radius: 0px;'
-                                              .format(duration_bar_color.red(),
-                                                      duration_bar_color.green(),
-                                                      duration_bar_color.blue(),
-                                                      self.border_radius))
-
-    def setTitleFont(self, title_font: QFont):
-        self.title_font = title_font
-        self.title_label.setFont(title_font)
-
-    def setTextFont(self, text_font: QFont):
-        self.text_font = text_font
-        self.text_label.setFont(text_font)
-
-    def setCloseButtonIcon(self, icon: QIcon):
-        self.close_button_icon = icon
-        self.close_button.setIcon(icon)
-
-    def setCloseButtonIconSize(self, size: QSize):
-        self.close_button_icon_size = size
-        self.close_button.setIconSize(size)
-
-    def setCloseButtonSize(self, size: QSize):
-        self.close_button_size = size
-        self.close_button.setFixedSize(size)
-
-    def setCloseButtonAlignment(self, alignment: int):
-        if (alignment == ToastNotification.CLOSE_BUTTON_TOP
-                or alignment == ToastNotification.CLOSE_BUTTON_MIDDLE
-                or alignment == ToastNotification.CLOSE_BUTTON_BOTTOM):
-            self.close_button_alignment = alignment
-
-        if alignment == ToastNotification.CLOSE_BUTTON_TOP:
-            self.button_layout.setAlignment(Qt.AlignTop)
-        elif alignment == ToastNotification.CLOSE_BUTTON_MIDDLE:
-            self.button_layout.setAlignment(Qt.AlignVCenter)
-        elif alignment == ToastNotification.CLOSE_BUTTON_BOTTOM:
-            self.button_layout.setAlignment(Qt.AlignBottom)
+        self.title_label.setStyleSheet('color: {};'.format(self.title_color.name()))
+        self.text_label.setStyleSheet('color: {};'.format(self.text_color.name()))
 
     @staticmethod
     def __recolor_image(image: QImage, width: int, height: int, color: QColor):
@@ -580,16 +585,16 @@ class ToastNotification(QDialog):
         ToastNotification.maximum_on_screen = maximum_on_screen
 
     @staticmethod
-    def setSpacing(spacing_in_px: int):
-        ToastNotification.spacing = spacing_in_px
+    def setSpacing(spacing: int):
+        ToastNotification.spacing = spacing
 
     @staticmethod
-    def setOffsetX(offset: int):
-        ToastNotification.offset_x = offset
+    def setOffsetX(offset_x: int):
+        ToastNotification.offset_x = offset_x
 
     @staticmethod
-    def setOffsetY(offset: int):
-        ToastNotification.offset_y = offset
+    def setOffsetY(offset_y: int):
+        ToastNotification.offset_y = offset_y
 
     @staticmethod
     def setOffset(offset_x: int, offset_y: int):
