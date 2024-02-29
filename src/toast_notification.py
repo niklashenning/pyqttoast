@@ -19,8 +19,10 @@ class ToastNotification(QDialog):
     CLOSE_BUTTON_BOTTOM = 2
 
     # Static variables
-    max_stacked_notifications = 3
-    notification_spacing = 10
+    maximum_on_screen = 3
+    spacing = 10
+    offset_x = 20
+    offset_y = 40
     always_on_main_screen = False
     position = BOTTOM_RIGHT
 
@@ -214,16 +216,8 @@ class ToastNotification(QDialog):
         self.icon_separator.setFixedHeight(int(self.height() * 0.5))
 
         # If max notifications on screen not reached, show notification
-        if ToastNotification.max_stacked_notifications > len(ToastNotification.currently_shown):
+        if ToastNotification.maximum_on_screen > len(ToastNotification.currently_shown):
             ToastNotification.currently_shown.append(self)
-
-            # Start duration timer
-            if self.duration != 0:
-                self.duration_timer.start(self.duration)
-
-            # Start duration bar update timer
-            if self.duration != 0 and self.showing_duration_bar:
-                self.duration_bar_timer.start(ToastNotification.DURATION_BAR_UPDATE_INTERVAL)
 
             # Calculate position and show (animate position too if not first notification)
             x, y = self.__calculate_position()
@@ -252,6 +246,7 @@ class ToastNotification(QDialog):
             self.fade_in_animation.setDuration(self.fade_in_duration)
             self.fade_in_animation.setStartValue(0)
             self.fade_in_animation.setEndValue(1)
+            self.fade_in_animation.finished.connect(self.__fade_in_finished)
             self.fade_in_animation.start()
 
             # Make sure title bar of parent is not grayed out
@@ -268,6 +263,15 @@ class ToastNotification(QDialog):
         if self.duration != 0:
             self.duration_timer.stop()
         self.__fade_out()
+
+    def __fade_in_finished(self):
+        # Start duration timer
+        if self.duration != 0:
+            self.duration_timer.start(self.duration)
+
+        # Start duration bar update timer
+        if self.duration != 0 and self.showing_duration_bar:
+            self.duration_bar_timer.start(ToastNotification.DURATION_BAR_UPDATE_INTERVAL)
 
     def __fade_out(self):
         self.fade_out_animation = QPropertyAnimation(self.opacity_effect, b"opacity")
@@ -331,7 +335,7 @@ class ToastNotification(QDialog):
         for n in ToastNotification.currently_shown:
             if n == self:
                 break
-            y_offset += n.height() + ToastNotification.notification_spacing
+            y_offset += n.height() + ToastNotification.spacing
 
         # Get screen
         primary_screen = QApplication.desktop().screen(QApplication.desktop().primaryScreen())
@@ -349,38 +353,41 @@ class ToastNotification(QDialog):
                         break
 
         # Calculate x and y position of notification
+        x = 0
+        y = 0
+
         if ToastNotification.position == ToastNotification.BOTTOM_RIGHT:
             x = (current_screen.geometry().width() - self.width()
-                 - 20 + current_screen.geometry().x())
+                 - ToastNotification.offset_x + current_screen.geometry().x())
             y = (current_screen.geometry().height()
                  - ToastNotification.currently_shown[0].height()
-                 - 40 + current_screen.geometry().y() - y_offset)
+                 - ToastNotification.offset_y + current_screen.geometry().y() - y_offset)
 
         elif ToastNotification.position == ToastNotification.BOTTOM_LEFT:
-            x = current_screen.geometry().x() + 20
+            x = current_screen.geometry().x() + ToastNotification.offset_x
             y = (current_screen.geometry().height()
                  - ToastNotification.currently_shown[0].height()
-                 - 40 + current_screen.geometry().y() - y_offset)
+                 - ToastNotification.offset_y + current_screen.geometry().y() - y_offset)
 
         elif ToastNotification.position == ToastNotification.BOTTOM_MIDDLE:
             x = (current_screen.geometry().x()
                  + current_screen.geometry().width() / 2 - self.width() / 2)
             y = (current_screen.geometry().height()
                  - ToastNotification.currently_shown[0].height()
-                 - 40 + current_screen.geometry().y() - y_offset)
+                 - ToastNotification.offset_y + current_screen.geometry().y() - y_offset)
 
         elif ToastNotification.position == ToastNotification.TOP_RIGHT:
             x = (current_screen.geometry().width() - self.width()
-                 - 20 + current_screen.geometry().x())
+                 - ToastNotification.offset_x + current_screen.geometry().x())
             y = (current_screen.geometry().y()
                  + ToastNotification.currently_shown[0].height()
-                 + 40 + y_offset)
+                 + ToastNotification.offset_y + y_offset)
 
         elif ToastNotification.position == ToastNotification.TOP_LEFT:
-            x = current_screen.geometry().x() + 20
+            x = current_screen.geometry().x() + ToastNotification.offset_x
             y = (current_screen.geometry().y()
                  + ToastNotification.currently_shown[0].height()
-                 + 40 + y_offset)
+                 + ToastNotification.offset_y + y_offset)
 
         elif ToastNotification.position == ToastNotification.TOP_MIDDLE:
             x = (current_screen.geometry().x()
@@ -388,7 +395,7 @@ class ToastNotification(QDialog):
                  - self.width() / 2)
             y = (current_screen.geometry().y()
                  + ToastNotification.currently_shown[0].height()
-                 + 40 + y_offset)
+                 + ToastNotification.offset_y + y_offset)
 
         return int(x), int(y)
 
@@ -425,6 +432,12 @@ class ToastNotification(QDialog):
                                                       self.duration_bar_color.green(),
                                                       self.duration_bar_color.blue(),
                                                       self.border_radius))
+
+    def setFadeInDuration(self, milliseconds: int):
+        self.fade_in_duration = milliseconds
+
+    def setFadeOutDuration(self, milliseconds: int):
+        self.fade_out_duration = milliseconds
 
     def setResetCountdownOnHover(self, on: bool):
         self.reset_countdown_on_hover = on
@@ -563,12 +576,25 @@ class ToastNotification(QDialog):
             ToastNotification.position = position
 
     @staticmethod
-    def setMaxStackedNotifications(max_stacked_notifications: int):
-        ToastNotification.max_stacked_notifications = max_stacked_notifications
+    def setMaximumOnScreen(maximum_on_screen: int):
+        ToastNotification.maximum_on_screen = maximum_on_screen
 
     @staticmethod
-    def setNotificationSpacing(spacing_in_px: int):
-        ToastNotification.notification_spacing = spacing_in_px
+    def setSpacing(spacing_in_px: int):
+        ToastNotification.spacing = spacing_in_px
+
+    @staticmethod
+    def setOffsetX(offset: int):
+        ToastNotification.offset_x = offset
+
+    @staticmethod
+    def setOffsetY(offset: int):
+        ToastNotification.offset_y = offset
+
+    @staticmethod
+    def setOffset(offset_x: int, offset_y: int):
+        ToastNotification.offset_x = offset_x
+        ToastNotification.offset_y = offset_y
 
     @staticmethod
     def setAlwaysOnMainScreen(on: bool):
