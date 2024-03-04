@@ -1,7 +1,8 @@
+import math
 import os
-from PyQt5.QtCore import Qt, QPropertyAnimation, QPoint, QTimer, QSize
-from PyQt5.QtGui import QPixmap, QIcon, QColor, QFont, QImage, qRgba
-from PyQt5.QtWidgets import QDialog, QPushButton, QLabel, QGraphicsOpacityEffect, QWidget, QHBoxLayout, QVBoxLayout, QApplication
+from PyQt5.QtCore import Qt, QPropertyAnimation, QPoint, QTimer, QSize, QMargins, QRect
+from PyQt5.QtGui import QPixmap, QIcon, QColor, QFont, QImage, qRgba, QFontMetrics
+from PyQt5.QtWidgets import QDialog, QPushButton, QLabel, QGraphicsOpacityEffect, QWidget, QApplication
 
 
 class ToastNotification(QDialog):
@@ -40,6 +41,9 @@ class ToastNotification(QDialog):
         self.showing_duration_bar = True
         self.title = ''
         self.text = ''
+        self.icon = QPixmap(ToastNotification.__get_directory() + '/icons/check-mark.png')
+        self.showing_icon = True
+        self.icon_size = QSize(16, 16)
         self.border_radius = 0
         self.fade_in_duration = 250
         self.fade_out_duration = 250
@@ -63,6 +67,12 @@ class ToastNotification(QDialog):
         self.close_button_icon_size = QSize(10, 10)
         self.close_button_size = QSize(24, 24)
         self.close_button_alignment = ToastNotification.CLOSE_BUTTON_TOP
+        self.margins = QMargins(20, 18, 10, 18)
+        self.icon_margins = QMargins(0, 0, 15, 0)
+        self.icon_section_margins = QMargins(0, 0, 15, 0)
+        self.text_section_margins = QMargins(0, 0, 15, 0)
+        self.close_button_margins = QMargins(0, -8, 0, -8)
+        self.text_section_spacing = 10
 
         self.elapsed_time = 0
 
@@ -71,8 +81,8 @@ class ToastNotification(QDialog):
         self.setAttribute(Qt.WA_TranslucentBackground)
         self.setFocusPolicy(Qt.NoFocus)
 
-        # Notification widget
-        self.notification = QWidget(self)
+        # Notification widget (QLabel because QWidget has weird behaviour with stylesheets)
+        self.notification = QLabel(self)
 
         # Opacity effect for fading animations
         self.opacity_effect = QGraphicsOpacityEffect()
@@ -92,10 +102,7 @@ class ToastNotification(QDialog):
         self.text_label = QLabel(self.notification)
 
         # Icon
-        icon_pixmap = QPixmap(ToastNotification.__get_directory() + '/icons/check-mark.png')
         self.icon_label = QLabel(self.notification)
-        self.icon_label.setPixmap(icon_pixmap)
-        self.icon_label.setFixedSize(icon_pixmap.width(), icon_pixmap.height())
 
         # Icon separator
         self.icon_separator = QWidget(self.notification)
@@ -116,39 +123,14 @@ class ToastNotification(QDialog):
         self.duration_bar_chunk.setFixedHeight(20)
         self.duration_bar_chunk.move(0, -16)
 
-        # Layout for icon and separator
-        self.icon_layout = QHBoxLayout()
-        self.icon_layout.addWidget(self.icon_label)
-        self.icon_layout.addWidget(self.icon_separator)
-        self.icon_layout.setSpacing(12)
-        self.icon_layout.setContentsMargins(10, 0, 8, 0)
-
-        # Layout for title and text
-        self.text_layout = QVBoxLayout()
-        self.text_layout.addWidget(self.title_label)
-        self.text_layout.addWidget(self.text_label)
-        self.text_layout.setAlignment(Qt.AlignVCenter)
-        self.text_layout.setContentsMargins(0, 8, 15, 8)
-
-        # Layout for close button
-        self.button_layout = QVBoxLayout()
-        self.button_layout.addWidget(self.close_button)
-
-        # Layout to combine everything
-        self.main_layout = QHBoxLayout()
-        self.main_layout.addLayout(self.icon_layout)
-        self.main_layout.addLayout(self.text_layout)
-        self.main_layout.addLayout(self.button_layout)
-        self.main_layout.setContentsMargins(8, 8, 8, 12)
-
-        # Set main layout
-        self.notification.setLayout(self.main_layout)
-
         # Set default colors
+        self.setIcon(self.icon)
+        self.setIconSize(self.icon_size)
+        self.setIconColor(self.icon_color)
         self.setBackgroundColor(self.background_color)
         self.setTitleColor(self.title_color)
         self.setTextColor(self.text_color)
-        self.setIconColor(self.icon_color)
+        self.setBorderRadius(self.border_radius)
         self.setIconSeparatorColor(self.icon_separator_color)
         self.setCloseButtonColor(self.close_button_color)
         self.setDurationBarColor(self.duration_bar_color)
@@ -188,32 +170,8 @@ class ToastNotification(QDialog):
                 self.duration_bar_timer.start(ToastNotification.DURATION_BAR_UPDATE_INTERVAL)
 
     def show(self):
-        # Enable word wrapping if notification would be too long without it
-        if self.notification.layout().sizeHint().width() > self.maximumWidth():
-            self.title_label.setWordWrap(True)
-            self.text_label.setWordWrap(True)
-            self.title_label.setMinimumWidth(0)
-            self.text_label.setMinimumWidth(0)
-            self.notification.layout().activate()
-
-            # Break lines only when it's really necessary to not go over max width
-            while self.notification.layout().sizeHint().width() <= self.maximumWidth() - 10:
-                self.title_label.setMinimumWidth(self.title_label.minimumWidth() + 10)
-                self.text_label.setMinimumWidth(self.text_label.minimumWidth() + 10)
-                self.notification.layout().activate()
-
-        # Adjust window and notification widget
-        self.setFixedSize(self.notification.layout().sizeHint())
-        self.notification.setFixedSize(self.notification.layout().sizeHint())
-
-        # Adjust duration bar and container
-        self.duration_bar_container.setFixedWidth(self.width())
-        self.duration_bar_container.move(0, self.height() - 4)
-        self.duration_bar.setFixedWidth(self.width())
-        self.duration_bar_chunk.setFixedWidth(self.width())
-
-        # Adjust icon separator
-        self.icon_separator.setFixedHeight(int(self.height() * 0.5))
+        # Setup UI
+        self.__setup_ui()
 
         # If max notifications on screen not reached, show notification
         if ToastNotification.maximum_on_screen > len(ToastNotification.currently_shown):
@@ -399,8 +357,298 @@ class ToastNotification(QDialog):
 
         return int(x), int(y)
 
+    def __setup_ui(self):
+        # Update widgets
+        self.__update_stylesheet()
+
+        # Calculate title and text width and height
+        title_font_metrics = QFontMetrics(self.title_font)
+        title_width = title_font_metrics.width(self.title_label.text())
+        title_height = title_font_metrics.tightBoundingRect(self.title_label.text()).height()
+        text_font_metrics = QFontMetrics(self.text_font)
+        text_width = text_font_metrics.width(self.text_label.text())
+        text_height = text_font_metrics.boundingRect(self.text_label.text()).height()
+
+        text_section_height = (self.text_section_margins.top()
+                               + title_height + self.text_section_spacing
+                               + text_height + self.text_section_margins.bottom())
+
+        # Calculate duration bar height
+        duration_bar_height = 0 if not self.showing_duration_bar else self.duration_bar_container.height()
+
+        # Calculate icon section width and height
+        icon_section_width = 0
+        icon_section_height = 0
+
+        if self.showing_icon:
+            icon_section_width = (self.icon_section_margins.left()
+                                  + self.icon_margins.left() + self.icon_label.width()
+                                  + self.icon_margins.right() + self.icon_separator.width()
+                                  + self.icon_section_margins.right())
+            icon_section_height = (self.icon_section_margins.top() + self.icon_margins.top()
+                                   + self.icon_label.height() + self.icon_margins.bottom()
+                                   + self.icon_section_margins.bottom())
+
+        # Calculate height and close button section
+        close_button_section_height = (self.close_button_margins.top()
+                                       + self.close_button.height()
+                                       + self.close_button_margins.bottom())
+
+        # Calculate needed width and height
+        width = (self.margins.left() + icon_section_width + self.text_section_margins.left()
+                 + max(title_width, text_width) + self.text_section_margins.right()
+                 + self.close_button_margins.left() + self.close_button.width()
+                 + self.close_button_margins.right() + self.margins.right())
+
+        height = (self.margins.top()
+                  + max(icon_section_height, text_section_height, close_button_section_height)
+                  + self.margins.bottom() + duration_bar_height)
+
+        forced_additional_height = 0
+        forced_reduced_height = 0
+
+        # Handle width greater than maximum width
+        if width > self.maximumWidth():
+            # Enable line break for title and text and recalculate size
+            title_width = text_width = title_width - (width - self.maximumWidth())
+
+            self.title_label.setMinimumWidth(title_width)
+            self.title_label.setWordWrap(True)
+            title_height = self.title_label.sizeHint().height()
+            self.title_label.resize(title_width, title_height)
+
+            self.text_label.setMinimumWidth(text_width)
+            self.text_label.setWordWrap(True)
+            text_height = self.text_label.sizeHint().height()
+            self.text_label.resize(text_width, text_height)
+
+            # Recalculate width and height
+            width = self.maximumWidth()
+
+            text_section_height = (self.text_section_margins.top()
+                                   + title_height + self.text_section_spacing
+                                   + text_height + self.text_section_margins.bottom())
+
+            height = (self.margins.top()
+                      + max(icon_section_height, text_section_height, close_button_section_height)
+                      + self.margins.bottom() + duration_bar_height)
+
+        # Handle height less than minimum height
+        if height < self.minimumHeight():
+            # Enable word wrap for title and text labels
+            self.title_label.setWordWrap(True)
+            self.text_label.setWordWrap(True)
+
+            # Calculate height with initial label width
+            title_width = (self.title_label.fontMetrics().boundingRect(
+                QRect(0, 0, 0, 0), Qt.TextWordWrap, self.title_label.text()).width())
+            text_width = (self.text_label.fontMetrics().boundingRect(
+                QRect(0, 0, 0, 0), Qt.TextWordWrap, self.text_label.text()).width())
+            temp_width = max(title_width, text_width)
+
+            title_width = (self.title_label.fontMetrics().boundingRect(
+                QRect(0, 0, temp_width, 0), Qt.TextWordWrap, self.title_label.text()).width())
+            title_height = (self.title_label.fontMetrics().boundingRect(
+                QRect(0, 0, temp_width, 0), Qt.TextWordWrap, self.title_label.text()).height())
+            text_width = (self.text_label.fontMetrics().boundingRect(
+                QRect(0, 0, temp_width, 0), Qt.TextWordWrap, self.text_label.text()).width())
+            text_height = (self.text_label.fontMetrics().boundingRect(
+                QRect(0, 0, temp_width, 0), Qt.TextWordWrap, self.text_label.text()).height())
+
+            text_section_height = (self.text_section_margins.top()
+                                   + title_height + self.text_section_spacing
+                                   + text_height + self.text_section_margins.bottom())
+
+            height = (self.margins.top()
+                      + max(icon_section_height, text_section_height, close_button_section_height)
+                      + self.margins.bottom() + duration_bar_height)
+
+            while temp_width <= width:
+                # Recalculate height with different text widths to find optimal value
+                temp_title_width = (self.title_label.fontMetrics().boundingRect(
+                    QRect(0, 0, temp_width, 0), Qt.TextWordWrap, self.title_label.text()).width())
+                temp_title_height = (self.title_label.fontMetrics().boundingRect(
+                    QRect(0, 0, temp_width, 0), Qt.TextWordWrap, self.title_label.text()).height())
+                temp_text_width = (self.text_label.fontMetrics().boundingRect(
+                    QRect(0, 0, temp_width, 0), Qt.TextWordWrap, self.text_label.text()).width())
+                temp_text_height = (self.text_label.fontMetrics().boundingRect(
+                    QRect(0, 0, temp_width, 0), Qt.TextWordWrap, self.text_label.text()).height())
+
+                temp_text_section_height = (self.text_section_margins.top()
+                                            + temp_title_height + self.text_section_spacing
+                                            + temp_text_height + self.text_section_margins.bottom())
+
+                temp_height = (self.margins.top()
+                               + max(icon_section_height, temp_text_section_height,
+                                     close_button_section_height)
+                               + self.margins.bottom() + duration_bar_height)
+
+                # Store values if calculated height is greater than or equal to min height
+                if temp_height >= self.minimumHeight():
+                    title_width = temp_title_width
+                    title_height = temp_title_height
+                    text_width = temp_text_width
+                    text_height = temp_text_height
+                    text_section_height = temp_text_section_height
+                    height = temp_height
+                    temp_width += 1
+
+                # Exit loop if calculated height is less than min height
+                else:
+                    break
+
+            # Recalculate width
+            width = (self.margins.left() + icon_section_width + self.text_section_margins.left()
+                     + max(title_width, text_width) + self.text_section_margins.right()
+                     + self.close_button_margins.left() + self.close_button.width()
+                     + self.close_button_margins.right() + self.margins.right())
+
+            # If min height not met, set height to min height
+            if height < self.minimumHeight():
+                forced_additional_height = self.minimumHeight() - height
+                height = self.minimumHeight()
+
+        # Handle width less than minimum width
+        if width < self.minimumWidth():
+            width = self.minimumWidth()
+
+        # Handle height greater than maximum height
+        if height > self.maximumHeight():
+            forced_reduced_height = height - self.maximumHeight()
+            height = self.maximumHeight()
+
+        # Resize window
+        self.resize(width, height)
+        self.notification.setFixedSize(width, height)
+
+        # Calculate difference between height and height of icon section
+        height_icon_section_height_difference = (max(icon_section_height,
+                                                     text_section_height,
+                                                     close_button_section_height)
+                                                 - icon_section_height)
+
+        if self.showing_icon:
+            # Move icon
+            self.icon_label.move(self.margins.left()
+                                 + self.icon_section_margins.left()
+                                 + self.icon_margins.left(),
+                                 self.margins.top()
+                                 + self.icon_section_margins.top()
+                                 + self.icon_margins.top()
+                                 + math.ceil(height_icon_section_height_difference / 2)
+                                 + math.ceil(forced_additional_height / 2)
+                                 - math.floor(forced_reduced_height / 2))
+
+            # Move and resize icon separator
+            self.icon_separator.setFixedHeight(text_section_height)
+            self.icon_separator.move(self.margins.left()
+                                     + self.icon_section_margins.left()
+                                     + self.icon_margins.left()
+                                     + self.icon_label.width()
+                                     + self.icon_margins.right(),
+                                     self.margins.top()
+                                     + self.icon_section_margins.top()
+                                     + math.ceil(forced_additional_height / 2)
+                                     - math.floor(forced_reduced_height / 2))
+
+            # Show icon section
+            self.icon_label.setVisible(True)
+            self.icon_separator.setVisible(True)
+        else:
+            # Hide icon section
+            self.icon_label.setVisible(False)
+            self.icon_separator.setVisible(False)
+
+        # Calculate difference between height and height of text section
+        height_text_section_height_difference = (max(icon_section_height,
+                                                     text_section_height,
+                                                     close_button_section_height)
+                                                 - text_section_height)
+
+        # Resize title and text labels
+        self.title_label.resize(title_width, title_height)
+        self.text_label.resize(text_width, text_height)
+
+        # Move title and text labels
+        if self.showing_icon:
+            self.title_label.move(self.margins.left()
+                                  + self.icon_section_margins.left()
+                                  + self.icon_margins.left()
+                                  + self.icon_label.width()
+                                  + self.icon_margins.right()
+                                  + self.icon_section_margins.right()
+                                  + self.text_section_margins.left(),
+                                  self.margins.top()
+                                  + self.text_section_margins.top()
+                                  + math.ceil(height_text_section_height_difference / 2)
+                                  + math.ceil(forced_additional_height / 2)
+                                  - math.floor(forced_reduced_height / 2))
+
+            self.text_label.move(self.margins.left()
+                                 + self.icon_section_margins.left()
+                                 + self.icon_margins.left()
+                                 + self.icon_label.width()
+                                 + self.icon_margins.right()
+                                 + self.icon_section_margins.right()
+                                 + self.text_section_margins.left(),
+                                 self.margins.top()
+                                 + self.text_section_margins.top()
+                                 + title_height + self.text_section_spacing
+                                 + math.ceil(height_text_section_height_difference / 2)
+                                 + math.ceil(forced_additional_height / 2)
+                                 - math.floor(forced_reduced_height / 2))
+
+        # Position is different if icon hidden
+        else:
+            self.title_label.move(self.margins.left()
+                                  + self.text_section_margins.left(),
+                                  self.margins.top()
+                                  + self.text_section_margins.top()
+                                  + math.ceil(height_text_section_height_difference / 2)
+                                  + math.ceil(forced_additional_height / 2)
+                                  - math.floor(forced_reduced_height / 2))
+
+            self.text_label.move(self.margins.left()
+                                 + self.text_section_margins.left(),
+                                 self.margins.top()
+                                 + self.text_section_margins.top()
+                                 + title_height + self.text_section_spacing
+                                 + math.ceil(height_text_section_height_difference / 2)
+                                 + math.ceil(forced_additional_height / 2)
+                                 - math.floor(forced_reduced_height / 2))
+
+        # Move close button to top, middle, or bottom position
+        if self.close_button_alignment == ToastNotification.CLOSE_BUTTON_TOP:
+            self.close_button.move(width - self.close_button.width()
+                                   - self.close_button_margins.right() - self.margins.right(),
+                                   self.margins.top() + self.close_button_margins.top())
+        elif self.close_button_alignment == ToastNotification.CLOSE_BUTTON_MIDDLE:
+            self.close_button.move(width - self.close_button.width()
+                                   - self.close_button_margins.right() - self.margins.right(),
+                                   math.ceil((height - self.close_button.height()
+                                              - duration_bar_height) / 2))
+        elif self.close_button_alignment == ToastNotification.CLOSE_BUTTON_BOTTOM:
+            self.close_button.move(width - self.close_button.width()
+                                   - self.close_button_margins.right() - self.margins.right(),
+                                   height - self.close_button.height()
+                                   - self.margins.bottom()
+                                   - self.close_button_margins.bottom() - duration_bar_height)
+
+        # Resize, move, and show duration bar if enabled
+        if self.showing_duration_bar:
+            self.duration_bar_container.setFixedWidth(width)
+            self.duration_bar_container.move(0, height - duration_bar_height)
+            self.duration_bar.setFixedWidth(width)
+            self.duration_bar_chunk.setFixedWidth(width)
+            self.duration_bar_container.setVisible(True)
+        else:
+            self.duration_bar_container.setVisible(False)
+
     def setDuration(self, duration: int):
         self.duration = duration
+
+    def showDurationBar(self, on: bool):
+        self.showing_duration_bar = on
 
     def setTitle(self, title: str):
         self.title = title
@@ -409,6 +657,32 @@ class ToastNotification(QDialog):
     def setText(self, text: str):
         self.text = text
         self.text_label.setText(text)
+
+    def setIcon(self, icon: QPixmap):
+        self.icon = icon
+        self.icon_label.setPixmap(icon)
+        self.setIconColor(self.icon_color)
+
+    def setIconSize(self, size: QSize):
+        self.icon_size = size
+        self.icon = self.icon.scaled(size.width(), size.height())
+        self.icon_label.setPixmap(self.icon)
+        self.icon_label.setFixedSize(size)
+
+    def setIconWidth(self, width: int):
+        self.icon_size.setWidth(width)
+        self.icon = self.icon.scaled(self.icon_size.width(), self.icon_size.height())
+        self.icon_label.setPixmap(self.icon)
+        self.icon_label.setFixedSize(self.icon_size)
+
+    def setIconHeight(self, height: int):
+        self.icon_size.setHeight(height)
+        self.icon = self.icon.scaled(self.icon_size.width(), self.icon_size.height())
+        self.icon_label.setPixmap(self.icon)
+        self.icon_label.setFixedSize(self.icon_size)
+
+    def showIcon(self, on: bool):
+        self.showing_icon = on
 
     def setBorderRadius(self, border_radius: int):
         self.border_radius = border_radius
@@ -482,9 +756,10 @@ class ToastNotification(QDialog):
         self.text_font = font
         self.text_label.setFont(font)
 
-    def setCloseButtonIcon(self, icon: QIcon):
-        self.close_button_icon = icon
-        self.close_button.setIcon(icon)
+    def setCloseButtonIcon(self, icon: QPixmap):
+        self.close_button_icon = QIcon(icon)
+        self.close_button.setIcon(self.close_button_icon)
+        self.setCloseButtonColor(self.close_button_color)
 
     def setCloseButtonIconSize(self, size: QSize):
         self.close_button_icon_size = size
@@ -516,12 +791,8 @@ class ToastNotification(QDialog):
                 or alignment == ToastNotification.CLOSE_BUTTON_BOTTOM):
             self.close_button_alignment = alignment
 
-        if alignment == ToastNotification.CLOSE_BUTTON_TOP:
-            self.button_layout.setAlignment(Qt.AlignTop)
-        elif alignment == ToastNotification.CLOSE_BUTTON_MIDDLE:
-            self.button_layout.setAlignment(Qt.AlignVCenter)
-        elif alignment == ToastNotification.CLOSE_BUTTON_BOTTOM:
-            self.button_layout.setAlignment(Qt.AlignBottom)
+    def setTextSectionSpacing(self, spacing: int):
+        self.text_section_spacing = spacing
 
     def __update_stylesheet(self):
         self.notification.setStyleSheet('background: {};'
