@@ -791,6 +791,81 @@ class ToastNotification(QDialog):
                 or alignment == ToastNotification.CLOSE_BUTTON_BOTTOM):
             self.close_button_alignment = alignment
 
+    def setMargins(self, margins: QMargins):
+        self.margins = margins
+
+    def setMarginLeft(self, margin: int):
+        self.margins.setLeft(margin)
+
+    def setMarginTop(self, margin: int):
+        self.margins.setTop(margin)
+
+    def setMarginRight(self, margin: int):
+        self.margins.setRight(margin)
+
+    def setMarginBottom(self, margin: int):
+        self.margins.setBottom(margin)
+
+    def setIconMargins(self, margins: QMargins):
+        self.icon_margins = margins
+
+    def setIconMarginLeft(self, margin: int):
+        self.icon_margins.setLeft(margin)
+
+    def setIconMarginTop(self, margin: int):
+        self.icon_margins.setTop(margin)
+
+    def setIconMarginRight(self, margin: int):
+        self.icon_margins.setRight(margin)
+
+    def setIconMarginBottom(self, margin: int):
+        self.icon_margins.setBottom(margin)
+
+    def setIconSectionMargins(self, margins: QMargins):
+        self.icon_section_margins = margins
+
+    def setIconSectionMarginLeft(self, margin: int):
+        self.icon_section_margins.setLeft(margin)
+
+    def setIconSectionMarginTop(self, margin: int):
+        self.icon_section_margins.setTop(margin)
+
+    def setIconSectionMarginRight(self, margin: int):
+        self.icon_section_margins.setRight(margin)
+
+    def setIconSectionMarginBottom(self, margin: int):
+        self.icon_section_margins.setBottom(margin)
+
+    def setTextSectionMargins(self, margins: QMargins):
+        self.text_section_margins = margins
+
+    def setTextSectionMarginLeft(self, margin: int):
+        self.text_section_margins.setLeft(margin)
+
+    def setTextSectionMarginTop(self, margin: int):
+        self.text_section_margins.setTop(margin)
+
+    def setTextSectionMarginRight(self, margin: int):
+        self.text_section_margins.setRight(margin)
+
+    def setTextSectionMarginBottom(self, margin: int):
+        self.text_section_margins.setBottom(margin)
+
+    def setCloseButtonMargins(self, margins: QMargins):
+        self.close_button_margins = margins
+
+    def setCloseButtonMarginLeft(self, margin: int):
+        self.close_button_margins.setLeft(margin)
+
+    def setCloseButtonMarginTop(self, margin: int):
+        self.close_button_margins.setTop(margin)
+
+    def setCloseButtonMarginRight(self, margin: int):
+        self.close_button_margins.setRight(margin)
+
+    def setCloseButtonMarginBottom(self, margin: int):
+        self.close_button_margins.setBottom(margin)
+
     def setTextSectionSpacing(self, spacing: int):
         self.text_section_spacing = spacing
 
