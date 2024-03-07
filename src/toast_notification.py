@@ -223,7 +223,6 @@ class ToastNotification(QDialog):
     def hide(self):
         if self.duration != 0:
             self.duration_timer.stop()
-            self.elapsed_time = 0
         self.__fade_out()
 
     def __fade_in_finished(self):
@@ -248,6 +247,9 @@ class ToastNotification(QDialog):
 
         if self in ToastNotification.currently_shown:
             ToastNotification.currently_shown.remove(self)
+            self.elapsed_time = 0
+
+            # Emit signal
             self.closed.emit()
 
             # Update every other currently shown notification
