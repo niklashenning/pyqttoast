@@ -245,10 +245,10 @@ class ToastNotification(QDialog):
 
     def __hide(self):
         self.close()
-        self.closed.emit()
 
         if self in ToastNotification.currently_shown:
             ToastNotification.currently_shown.remove(self)
+            self.closed.emit()
 
             # Update every other currently shown notification
             for n in ToastNotification.currently_shown:
@@ -952,3 +952,15 @@ class ToastNotification(QDialog):
     @staticmethod
     def setAlwaysOnMainScreen(on: bool):
         ToastNotification.always_on_main_screen = on
+
+    @staticmethod
+    def getCount():
+        return len(ToastNotification.currently_shown) + len(ToastNotification.queue)
+
+    @staticmethod
+    def getVisibleCount():
+        return len(ToastNotification.currently_shown)
+
+    @staticmethod
+    def getQueueCount():
+        return len(ToastNotification.queue)
