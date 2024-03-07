@@ -1,6 +1,6 @@
 import math
 import os
-from PyQt5.QtCore import Qt, QPropertyAnimation, QPoint, QTimer, QSize, QMargins, QRect
+from PyQt5.QtCore import Qt, QPropertyAnimation, QPoint, QTimer, QSize, QMargins, QRect, pyqtSignal
 from PyQt5.QtGui import QPixmap, QIcon, QColor, QFont, QImage, qRgba, QFontMetrics
 from PyQt5.QtWidgets import QDialog, QPushButton, QLabel, QGraphicsOpacityEffect, QWidget, QApplication
 
@@ -31,6 +31,9 @@ class ToastNotification(QDialog):
     queue = []
 
     DURATION_BAR_UPDATE_INTERVAL = 10
+
+    # Close event
+    closed = pyqtSignal()
 
     def __init__(self, parent):
 
@@ -220,6 +223,7 @@ class ToastNotification(QDialog):
     def hide(self):
         if self.duration != 0:
             self.duration_timer.stop()
+            self.elapsed_time = 0
         self.__fade_out()
 
     def __fade_in_finished(self):
@@ -241,6 +245,7 @@ class ToastNotification(QDialog):
 
     def __hide(self):
         self.close()
+        self.closed.emit()
 
         if self in ToastNotification.currently_shown:
             ToastNotification.currently_shown.remove(self)
@@ -358,9 +363,6 @@ class ToastNotification(QDialog):
         return int(x), int(y)
 
     def __setup_ui(self):
-        # Update widgets
-        self.__update_stylesheet()
-
         # Calculate title and text width and height
         title_font_metrics = QFontMetrics(self.title_font)
         title_width = title_font_metrics.width(self.title_label.text())
