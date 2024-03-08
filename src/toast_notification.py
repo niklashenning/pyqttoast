@@ -67,7 +67,7 @@ class ToastNotification(QDialog):
         self.text_font = QFont()
         self.text_font.setFamily('Arial')
         self.text_font.setPointSize(9)
-        self.close_button_icon = QIcon(ToastNotification.__get_directory() + '/icons/cross.png')
+        self.close_button_icon = QPixmap(ToastNotification.__get_directory() + '/icons/cross.png')
         self.close_button_icon_size = QSize(10, 10)
         self.close_button_size = QSize(24, 24)
         self.close_button_alignment = ToastNotification.CLOSE_BUTTON_TOP
@@ -687,24 +687,48 @@ class ToastNotification(QDialog):
         else:
             self.duration_bar_container.setVisible(False)
 
+    def getDuration(self) -> int:
+        return self.duration
+
     def setDuration(self, duration: int):
         self.duration = duration
 
-    def showDurationBar(self, on: bool):
+    def isShowingDurationBar(self) -> bool:
+        return self.showing_duration_bar
+
+    def setShowDurationBar(self, on: bool):
         self.showing_duration_bar = on
+
+    def getTitle(self) -> str:
+        return self.title
 
     def setTitle(self, title: str):
         self.title = title
         self.title_label.setText(title)
 
+    def getText(self) -> str:
+        return self.text
+
     def setText(self, text: str):
         self.text = text
         self.text_label.setText(text)
+
+    def getIcon(self) -> QPixmap:
+        return self.icon_label.pixmap()
 
     def setIcon(self, icon: QPixmap):
         self.icon = icon
         self.icon_label.setPixmap(icon)
         self.setIconColor(self.icon_color)
+
+    def isShowingIcon(self) -> bool:
+        return self.showing_icon
+
+    def setShowIcon(self, on: bool):
+        self.showing_icon = on
+
+    def getIconSize(self) -> QSize:
+        return self.icon_size
 
     def setIconSize(self, size: QSize):
         self.icon_size = size
@@ -712,11 +736,17 @@ class ToastNotification(QDialog):
         self.icon_label.setPixmap(self.icon)
         self.icon_label.setFixedSize(size)
 
+    def getIconWidth(self) -> int:
+        return self.icon_size.width()
+
     def setIconWidth(self, width: int):
         self.icon_size.setWidth(width)
         self.icon = self.icon.scaled(self.icon_size.width(), self.icon_size.height())
         self.icon_label.setPixmap(self.icon)
         self.icon_label.setFixedSize(self.icon_size)
+
+    def getIconHeight(self) -> int:
+        return self.icon_size.height()
 
     def setIconHeight(self, height: int):
         self.icon_size.setHeight(height)
@@ -724,21 +754,33 @@ class ToastNotification(QDialog):
         self.icon_label.setPixmap(self.icon)
         self.icon_label.setFixedSize(self.icon_size)
 
-    def showIcon(self, on: bool):
-        self.showing_icon = on
+    def getBorderRadius(self) -> int:
+        return self.border_radius
 
     def setBorderRadius(self, border_radius: int):
         self.border_radius = border_radius
         self.__update_stylesheet()
 
+    def getFadeInDuration(self) -> int:
+        return self.fade_in_duration
+
     def setFadeInDuration(self, duration: int):
         self.fade_in_duration = duration
+
+    def getFadeOutDuration(self) -> int:
+        return self.fade_out_duration
 
     def setFadeOutDuration(self, duration: int):
         self.fade_out_duration = duration
 
+    def resettingCountdownOnHover(self) -> bool:
+        return self.reset_countdown_on_hover
+
     def setResetCountdownOnHover(self, on: bool):
         self.reset_countdown_on_hover = on
+
+    def stayingOnTop(self) -> bool:
+        return self.stay_on_top
 
     def setStayOnTop(self, on: bool):
         self.stay_on_top = on
@@ -752,17 +794,29 @@ class ToastNotification(QDialog):
                                 Qt.CustomizeWindowHint |
                                 Qt.FramelessWindowHint)
 
+    def getBackgroundColor(self) -> QColor:
+        return self.background_color
+
     def setBackgroundColor(self, color: QColor):
         self.background_color = color
         self.__update_stylesheet()
+
+    def getTitleColor(self) -> QColor:
+        return self.title_color
 
     def setTitleColor(self, color: QColor):
         self.title_color = color
         self.__update_stylesheet()
 
+    def getTextColor(self) -> QColor:
+        return self.text_color
+
     def setTextColor(self, color: QColor):
         self.text_color = color
         self.__update_stylesheet()
+
+    def getIconColor(self) -> QColor:
+        return self.icon_color
 
     def setIconColor(self, color: QColor):
         self.icon_color = color
@@ -773,9 +827,15 @@ class ToastNotification(QDialog):
                                                color)
         self.icon_label.setPixmap(QPixmap(recolored_image))
 
+    def getIconSeparatorColor(self) -> QColor:
+        return self.icon_separator_color
+
     def setIconSeparatorColor(self, color: QColor):
         self.icon_separator_color = color
         self.__update_stylesheet()
+
+    def getCloseButtonColor(self) -> QColor:
+        return self.close_button_color
 
     def setCloseButtonColor(self, color: QColor):
         self.close_button_color = color
@@ -787,46 +847,79 @@ class ToastNotification(QDialog):
                                                color)
         self.close_button.setIcon(QIcon(QPixmap(recolored_image)))
 
+    def getDurationBarColor(self) -> QColor:
+        return self.duration_bar_color
+
     def setDurationBarColor(self, color: QColor):
         self.duration_bar_color = color
         self.__update_stylesheet()
+
+    def getTitleFont(self) -> QFont:
+        return self.title_font
 
     def setTitleFont(self, font: QFont):
         self.title_font = font
         self.title_label.setFont(font)
 
+    def getTextFont(self) -> QFont:
+        return self.text_font
+
     def setTextFont(self, font: QFont):
         self.text_font = font
         self.text_label.setFont(font)
 
+    def getCloseButtonIcon(self) -> QPixmap:
+        return self.close_button_icon
+
     def setCloseButtonIcon(self, icon: QPixmap):
-        self.close_button_icon = QIcon(icon)
-        self.close_button.setIcon(self.close_button_icon)
+        self.close_button_icon = icon
+        self.close_button.setIcon(QIcon(self.close_button_icon))
         self.setCloseButtonColor(self.close_button_color)
+
+    def getCloseButtonIconSize(self) -> QSize:
+        return self.close_button_icon_size
 
     def setCloseButtonIconSize(self, size: QSize):
         self.close_button_icon_size = size
         self.close_button.setIconSize(size)
 
+    def getCloseButtonIconWidth(self) -> int:
+        return self.close_button_icon_size.width()
+
     def setCloseButtonIconWidth(self, width: int):
         self.close_button_icon_size.setWidth(width)
         self.close_button.setIconSize(self.close_button_icon_size)
+
+    def getCloseButtonIconHeight(self) -> int:
+        return self.close_button_icon_size.height()
 
     def setCloseButtonIconHeight(self, height: int):
         self.close_button_icon_size.setHeight(height)
         self.close_button.setIconSize(self.close_button_icon_size)
 
+    def getCloseButtonSize(self) -> QSize:
+        return self.close_button_size
+
     def setCloseButtonSize(self, size: QSize):
         self.close_button_size = size
         self.close_button.setFixedSize(size)
+
+    def getCloseButtonWidth(self) -> int:
+        return self.close_button_size.width()
 
     def setCloseButtonWidth(self, width: int):
         self.close_button_size.setWidth(width)
         self.close_button.setFixedSize(self.close_button_size)
 
+    def getCloseButtonHeight(self) -> int:
+        return self.close_button_size.height()
+
     def setCloseButtonHeight(self, height: int):
         self.close_button_size.setHeight(height)
         self.close_button.setFixedSize(self.close_button_size)
+
+    def getCloseButtonAlignment(self) -> int:
+        return self.close_button_alignment
 
     def setCloseButtonAlignment(self, alignment: int):
         if (alignment == ToastNotification.CLOSE_BUTTON_TOP
@@ -834,80 +927,158 @@ class ToastNotification(QDialog):
                 or alignment == ToastNotification.CLOSE_BUTTON_BOTTOM):
             self.close_button_alignment = alignment
 
+    def getMargins(self) -> QMargins:
+        return self.margins
+
     def setMargins(self, margins: QMargins):
         self.margins = margins
+
+    def getMarginLeft(self) -> int:
+        return self.margins.left()
 
     def setMarginLeft(self, margin: int):
         self.margins.setLeft(margin)
 
+    def getMarginTop(self) -> int:
+        return self.margins.top()
+
     def setMarginTop(self, margin: int):
         self.margins.setTop(margin)
+
+    def getMarginRight(self) -> int:
+        return self.margins.right()
 
     def setMarginRight(self, margin: int):
         self.margins.setRight(margin)
 
+    def getMarginBottom(self) -> int:
+        return self.margins.bottom()
+
     def setMarginBottom(self, margin: int):
         self.margins.setBottom(margin)
+
+    def getIconMargins(self) -> QMargins:
+        return self.icon_margins
 
     def setIconMargins(self, margins: QMargins):
         self.icon_margins = margins
 
+    def getIconMarginLeft(self) -> int:
+        return self.icon_margins.left()
+
     def setIconMarginLeft(self, margin: int):
         self.icon_margins.setLeft(margin)
+
+    def getIconMarginTop(self) -> int:
+        return self.icon_margins.top()
 
     def setIconMarginTop(self, margin: int):
         self.icon_margins.setTop(margin)
 
+    def getIconMarginRight(self) -> int:
+        return self.icon_margins.right()
+
     def setIconMarginRight(self, margin: int):
         self.icon_margins.setRight(margin)
+
+    def getIconMarginBottom(self) -> int:
+        return self.icon_margins.bottom()
 
     def setIconMarginBottom(self, margin: int):
         self.icon_margins.setBottom(margin)
 
+    def getIconSectionMargins(self) -> QMargins:
+        return self.icon_section_margins
+
     def setIconSectionMargins(self, margins: QMargins):
         self.icon_section_margins = margins
+
+    def getIconSectionMarginLeft(self) -> int:
+        return self.icon_section_margins.left()
 
     def setIconSectionMarginLeft(self, margin: int):
         self.icon_section_margins.setLeft(margin)
 
+    def getIconSectionMarginTop(self) -> int:
+        return self.icon_section_margins.top()
+
     def setIconSectionMarginTop(self, margin: int):
         self.icon_section_margins.setTop(margin)
+
+    def getIconSectionMarginRight(self) -> int:
+        return self.icon_section_margins.right()
 
     def setIconSectionMarginRight(self, margin: int):
         self.icon_section_margins.setRight(margin)
 
+    def getIconSectionMarginBottom(self) -> int:
+        return self.icon_section_margins.bottom()
+
     def setIconSectionMarginBottom(self, margin: int):
         self.icon_section_margins.setBottom(margin)
+
+    def getTextSectionMargins(self) -> QMargins:
+        return self.text_section_margins
 
     def setTextSectionMargins(self, margins: QMargins):
         self.text_section_margins = margins
 
+    def getTextSectionMarginLeft(self) -> int:
+        return self.text_section_margins.left()
+
     def setTextSectionMarginLeft(self, margin: int):
         self.text_section_margins.setLeft(margin)
+
+    def getTextSectionMarginTop(self) -> int:
+        return self.text_section_margins.top()
 
     def setTextSectionMarginTop(self, margin: int):
         self.text_section_margins.setTop(margin)
 
+    def getTextSectionMarginRight(self) -> int:
+        return self.text_section_margins.right()
+
     def setTextSectionMarginRight(self, margin: int):
         self.text_section_margins.setRight(margin)
+
+    def getTextSectionMarginBottom(self) -> int:
+        return self.text_section_margins.bottom()
 
     def setTextSectionMarginBottom(self, margin: int):
         self.text_section_margins.setBottom(margin)
 
+    def getCloseButtonMargins(self) -> QMargins:
+        return self.close_button_margins
+
     def setCloseButtonMargins(self, margins: QMargins):
         self.close_button_margins = margins
+
+    def getCloseButtonMarginLeft(self) -> int:
+        return self.close_button_margins.left()
 
     def setCloseButtonMarginLeft(self, margin: int):
         self.close_button_margins.setLeft(margin)
 
+    def getCloseButtonMarginTop(self) -> int:
+        return self.close_button_margins.top()
+
     def setCloseButtonMarginTop(self, margin: int):
         self.close_button_margins.setTop(margin)
+
+    def getCloseButtonMarginRight(self) -> int:
+        return self.close_button_margins.right()
 
     def setCloseButtonMarginRight(self, margin: int):
         self.close_button_margins.setRight(margin)
 
+    def getCloseButtonMarginBottom(self) -> int:
+        return self.close_button_margins.bottom()
+
     def setCloseButtonMarginBottom(self, margin: int):
         self.close_button_margins.setBottom(margin)
+
+    def getTextSectionSpacing(self) -> int:
+        return self.text_section_spacing
 
     def setTextSectionSpacing(self, spacing: int):
         self.text_section_spacing = spacing
@@ -960,6 +1131,59 @@ class ToastNotification(QDialog):
         return os.path.dirname(os.path.realpath(__file__))
 
     @staticmethod
+    def getMaximumOnScreen():
+        return ToastNotification.maximum_on_screen
+
+    @staticmethod
+    def setMaximumOnScreen(maximum_on_screen: int):
+        ToastNotification.maximum_on_screen = maximum_on_screen
+
+    @staticmethod
+    def getSpacing():
+        return ToastNotification.spacing
+
+    @staticmethod
+    def setSpacing(spacing: int):
+        ToastNotification.spacing = spacing
+
+    @staticmethod
+    def getOffsetX() -> int:
+        return ToastNotification.offset_x
+
+    @staticmethod
+    def setOffsetX(offset_x: int):
+        ToastNotification.offset_x = offset_x
+
+    @staticmethod
+    def getOffsetY() -> int:
+        return ToastNotification.offset_y
+
+    @staticmethod
+    def setOffsetY(offset_y: int):
+        ToastNotification.offset_y = offset_y
+
+    @staticmethod
+    def getOffset() -> tuple[int, int]:
+        return ToastNotification.offset_x, ToastNotification.offset_y
+
+    @staticmethod
+    def setOffset(offset_x: int, offset_y: int):
+        ToastNotification.offset_x = offset_x
+        ToastNotification.offset_y = offset_y
+
+    @staticmethod
+    def isAlwaysOnMainScreen() -> bool:
+        return ToastNotification.always_on_main_screen
+
+    @staticmethod
+    def setAlwaysOnMainScreen(on: bool):
+        ToastNotification.always_on_main_screen = on
+
+    @staticmethod
+    def getPosition() -> int:
+        return ToastNotification.position
+
+    @staticmethod
     def setPosition(position: int):
         if (position == ToastNotification.BOTTOM_RIGHT
                 or position == ToastNotification.BOTTOM_LEFT
@@ -970,38 +1194,13 @@ class ToastNotification(QDialog):
             ToastNotification.position = position
 
     @staticmethod
-    def setMaximumOnScreen(maximum_on_screen: int):
-        ToastNotification.maximum_on_screen = maximum_on_screen
-
-    @staticmethod
-    def setSpacing(spacing: int):
-        ToastNotification.spacing = spacing
-
-    @staticmethod
-    def setOffsetX(offset_x: int):
-        ToastNotification.offset_x = offset_x
-
-    @staticmethod
-    def setOffsetY(offset_y: int):
-        ToastNotification.offset_y = offset_y
-
-    @staticmethod
-    def setOffset(offset_x: int, offset_y: int):
-        ToastNotification.offset_x = offset_x
-        ToastNotification.offset_y = offset_y
-
-    @staticmethod
-    def setAlwaysOnMainScreen(on: bool):
-        ToastNotification.always_on_main_screen = on
-
-    @staticmethod
-    def getCount():
+    def getCount() -> int:
         return len(ToastNotification.currently_shown) + len(ToastNotification.queue)
 
     @staticmethod
-    def getVisibleCount():
+    def getVisibleCount() -> int:
         return len(ToastNotification.currently_shown)
 
     @staticmethod
-    def getQueueCount():
+    def getQueueCount() -> int:
         return len(ToastNotification.queue)
