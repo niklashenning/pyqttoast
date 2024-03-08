@@ -23,7 +23,7 @@ class ToastNotification(QDialog):
     maximum_on_screen = 3
     spacing = 10
     offset_x = 20
-    offset_y = 40
+    offset_y = 45
     always_on_main_screen = False
     position = BOTTOM_RIGHT
 
@@ -31,6 +31,7 @@ class ToastNotification(QDialog):
     queue = []
 
     DURATION_BAR_UPDATE_INTERVAL = 10
+    DROP_SHADOW_SIZE = 5
 
     # Close event
     closed = pyqtSignal()
@@ -86,6 +87,27 @@ class ToastNotification(QDialog):
 
         # Notification widget (QLabel because QWidget has weird behaviour with stylesheets)
         self.notification = QLabel(self)
+
+        # Drop shadow (has to be drawn manually since only one graphics effect can be applied)
+        self.drop_shadow_layer_1 = QWidget(self)
+        self.drop_shadow_layer_1.setStyleSheet('background: rgba(0, 0, 0, 2);'
+                                               'border-radius: 8px;')
+
+        self.drop_shadow_layer_2 = QWidget(self)
+        self.drop_shadow_layer_2.setStyleSheet('background: rgba(0, 0, 0, 3);'
+                                               'border-radius: 8px;')
+
+        self.drop_shadow_layer_3 = QWidget(self)
+        self.drop_shadow_layer_3.setStyleSheet('background: rgba(0, 0, 0, 5);'
+                                               'border-radius: 8px;')
+
+        self.drop_shadow_layer_4 = QWidget(self)
+        self.drop_shadow_layer_4.setStyleSheet('background: rgba(0, 0, 0, 7);'
+                                               'border-radius: 8px;')
+
+        self.drop_shadow_layer_5 = QWidget(self)
+        self.drop_shadow_layer_5.setStyleSheet('background: rgba(0, 0, 0, 10);'
+                                               'border-radius: 8px;')
 
         # Opacity effect for fading animations
         self.opacity_effect = QGraphicsOpacityEffect()
@@ -180,6 +202,14 @@ class ToastNotification(QDialog):
         if ToastNotification.maximum_on_screen > len(ToastNotification.currently_shown):
             ToastNotification.currently_shown.append(self)
 
+            # Start duration timer
+            if self.duration != 0:
+                self.duration_timer.start(self.duration)
+
+            # Start duration bar update timer
+            if self.duration != 0 and self.showing_duration_bar:
+                self.duration_bar_timer.start(ToastNotification.DURATION_BAR_UPDATE_INTERVAL)
+
             # Calculate position and show (animate position too if not first notification)
             x, y = self.__calculate_position()
 
@@ -207,7 +237,6 @@ class ToastNotification(QDialog):
             self.fade_in_animation.setDuration(self.fade_in_duration)
             self.fade_in_animation.setStartValue(0)
             self.fade_in_animation.setEndValue(1)
-            self.fade_in_animation.finished.connect(self.__fade_in_finished)
             self.fade_in_animation.start()
 
             # Make sure title bar of parent is not grayed out
@@ -224,15 +253,6 @@ class ToastNotification(QDialog):
         if self.duration != 0:
             self.duration_timer.stop()
         self.__fade_out()
-
-    def __fade_in_finished(self):
-        # Start duration timer
-        if self.duration != 0:
-            self.duration_timer.start(self.duration)
-
-        # Start duration bar update timer
-        if self.duration != 0 and self.showing_duration_bar:
-            self.duration_bar_timer.start(ToastNotification.DURATION_BAR_UPDATE_INTERVAL)
 
     def __fade_out(self):
         self.fade_out_animation = QPropertyAnimation(self.opacity_effect, b"opacity")
@@ -300,7 +320,7 @@ class ToastNotification(QDialog):
         for n in ToastNotification.currently_shown:
             if n == self:
                 break
-            y_offset += n.height() + ToastNotification.spacing
+            y_offset += n.notification.height() + ToastNotification.spacing
 
         # Get screen
         primary_screen = QApplication.desktop().screen(QApplication.desktop().primaryScreen())
@@ -322,47 +342,47 @@ class ToastNotification(QDialog):
         y = 0
 
         if ToastNotification.position == ToastNotification.BOTTOM_RIGHT:
-            x = (current_screen.geometry().width() - self.width()
+            x = (current_screen.geometry().width() - self.notification.width()
                  - ToastNotification.offset_x + current_screen.geometry().x())
             y = (current_screen.geometry().height()
-                 - ToastNotification.currently_shown[0].height()
+                 - ToastNotification.currently_shown[0].notification.height()
                  - ToastNotification.offset_y + current_screen.geometry().y() - y_offset)
 
         elif ToastNotification.position == ToastNotification.BOTTOM_LEFT:
             x = current_screen.geometry().x() + ToastNotification.offset_x
             y = (current_screen.geometry().height()
-                 - ToastNotification.currently_shown[0].height()
+                 - ToastNotification.currently_shown[0].notification.height()
                  - ToastNotification.offset_y + current_screen.geometry().y() - y_offset)
 
         elif ToastNotification.position == ToastNotification.BOTTOM_MIDDLE:
             x = (current_screen.geometry().x()
-                 + current_screen.geometry().width() / 2 - self.width() / 2)
+                 + current_screen.geometry().width() / 2 - self.notification.width() / 2)
             y = (current_screen.geometry().height()
-                 - ToastNotification.currently_shown[0].height()
+                 - ToastNotification.currently_shown[0].notification.height()
                  - ToastNotification.offset_y + current_screen.geometry().y() - y_offset)
 
         elif ToastNotification.position == ToastNotification.TOP_RIGHT:
-            x = (current_screen.geometry().width() - self.width()
+            x = (current_screen.geometry().width() - self.notification.width()
                  - ToastNotification.offset_x + current_screen.geometry().x())
             y = (current_screen.geometry().y()
-                 + ToastNotification.currently_shown[0].height()
                  + ToastNotification.offset_y + y_offset)
 
         elif ToastNotification.position == ToastNotification.TOP_LEFT:
             x = current_screen.geometry().x() + ToastNotification.offset_x
             y = (current_screen.geometry().y()
-                 + ToastNotification.currently_shown[0].height()
                  + ToastNotification.offset_y + y_offset)
 
         elif ToastNotification.position == ToastNotification.TOP_MIDDLE:
             x = (current_screen.geometry().x()
                  + current_screen.geometry().width() / 2
-                 - self.width() / 2)
+                 - self.notification.width() / 2)
             y = (current_screen.geometry().y()
-                 + ToastNotification.currently_shown[0].height()
                  + ToastNotification.offset_y + y_offset)
 
-        return int(x), int(y)
+        x = int(x - ToastNotification.DROP_SHADOW_SIZE)
+        y = int(y - ToastNotification.DROP_SHADOW_SIZE)
+
+        return x, y
 
     def __setup_ui(self):
         # Calculate title and text width and height
@@ -521,9 +541,28 @@ class ToastNotification(QDialog):
             forced_reduced_height = height - self.maximumHeight()
             height = self.maximumHeight()
 
+        # Calculate width and height including space for drop shadow
+        total_width = width + (ToastNotification.DROP_SHADOW_SIZE * 2)
+        total_height = height + (ToastNotification.DROP_SHADOW_SIZE * 2)
+
+        # Resize drop shadow
+        self.drop_shadow_layer_1.resize(total_width, total_height)
+        self.drop_shadow_layer_1.move(0, 0)
+        self.drop_shadow_layer_2.resize(total_width - 2, total_height - 2)
+        self.drop_shadow_layer_2.move(1, 1)
+        self.drop_shadow_layer_3.resize(total_width - 4, total_height - 4)
+        self.drop_shadow_layer_3.move(2, 2)
+        self.drop_shadow_layer_4.resize(total_width - 6, total_height - 6)
+        self.drop_shadow_layer_4.move(3, 3)
+        self.drop_shadow_layer_5.resize(total_width - 8, total_height - 8)
+        self.drop_shadow_layer_5.move(4, 4)
+
         # Resize window
-        self.resize(width, height)
+        self.resize(total_width, total_height)
         self.notification.setFixedSize(width, height)
+        self.notification.move(ToastNotification.DROP_SHADOW_SIZE,
+                               ToastNotification.DROP_SHADOW_SIZE)
+        self.notification.raise_()
 
         # Calculate difference between height and height of icon section
         height_icon_section_height_difference = (max(icon_section_height,
