@@ -6,6 +6,7 @@ from PyQt5.QtWidgets import QDialog, QPushButton, QLabel, QGraphicsOpacityEffect
 
 
 class ToastNotification(QDialog):
+
     # Positions enum
     BOTTOM_RIGHT = 0
     BOTTOM_LEFT = 1
@@ -1098,11 +1099,12 @@ class ToastNotification(QDialog):
 
         self.duration_bar_chunk.setStyleSheet('background: rgba({}, {}, {}, 255);'
                                               'border-bottom-left-radius: {}px;'
-                                              'border-bottom-right-radius: 0px;'
+                                              'border-bottom-right-radius: {}px;'
                                               .format(self.duration_bar_color.red(),
                                                       self.duration_bar_color.green(),
                                                       self.duration_bar_color.blue(),
-                                                      self.border_radius))
+                                                      self.border_radius,
+                                                      self.border_radius if self.duration == 0 else 0))
 
         self.icon_separator.setStyleSheet('background: {};'
                                           .format(self.icon_separator_color.name()))
