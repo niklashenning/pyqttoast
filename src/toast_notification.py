@@ -1,38 +1,67 @@
 import math
 import os
+from enum import Enum
 from PyQt5.QtCore import Qt, QPropertyAnimation, QPoint, QTimer, QSize, QMargins, QRect, pyqtSignal
 from PyQt5.QtGui import QPixmap, QIcon, QColor, QFont, QImage, qRgba, QFontMetrics
 from PyQt5.QtWidgets import QDialog, QPushButton, QLabel, QGraphicsOpacityEffect, QWidget, QApplication
 
 
+class ToastPreset(Enum):
+    SUCCESS = 1
+    WARNING = 2
+    ERROR = 3
+    INFORMATION = 4
+
+
+class ToastIcon(Enum):
+    SUCCESS = 1
+    WARNING = 2
+    ERROR = 3
+    INFORMATION = 4
+    CLOSE = 5
+
+
+class ToastPosition(Enum):
+    BOTTOM_RIGHT = 1
+    BOTTOM_LEFT = 2
+    BOTTOM_MIDDLE = 3
+    TOP_RIGHT = 4
+    TOP_LEFT = 5
+    TOP_MIDDLE = 6
+
+
+class ToastButtonAlignment(Enum):
+    TOP = 1
+    MIDDLE = 2
+    BOTTOM = 3
+
+
 class ToastNotification(QDialog):
 
-    # Positions enum
-    BOTTOM_RIGHT = 0
-    BOTTOM_LEFT = 1
-    BOTTOM_MIDDLE = 2
-    TOP_RIGHT = 3
-    TOP_LEFT = 4
-    TOP_MIDDLE = 5
-
-    # Close button alignment enum
-    CLOSE_BUTTON_TOP = 0
-    CLOSE_BUTTON_MIDDLE = 1
-    CLOSE_BUTTON_BOTTOM = 2
-
-    # Static variables
+    # Static attributes
     maximum_on_screen = 3
     spacing = 10
     offset_x = 20
     offset_y = 45
     always_on_main_screen = False
-    position = BOTTOM_RIGHT
+    position = ToastPosition.BOTTOM_RIGHT
 
     currently_shown = []
     queue = []
 
+    # Constants
     DURATION_BAR_UPDATE_INTERVAL = 10
     DROP_SHADOW_SIZE = 5
+    SUCCESS_ACCENT_COLOR = QColor('#3E9141')
+    WARNING_ACCENT_COLOR = QColor('#E8B849')
+    ERROR_ACCENT_COLOR = QColor('#BA2626')
+    INFORMATION_ACCENT_COLOR = QColor('#0F52BA')
+    DEFAULT_ACCENT_COLOR = QColor('#5C5C5C')
+    DEFAULT_BACKGROUND_COLOR = QColor('#E7F4F9')
+    DEFAULT_TITLE_COLOR = QColor('#000000')
+    DEFAULT_TEXT_COLOR = QColor('#5C5C5C')
+    DEFAULT_ICON_SEPARATOR_COLOR = QColor('#D9D9D9')
+    DEFAULT_CLOSE_BUTTON_COLOR = QColor('#000000')
 
     # Close event
     closed = pyqtSignal()
@@ -46,21 +75,21 @@ class ToastNotification(QDialog):
         self.showing_duration_bar = True
         self.title = ''
         self.text = ''
-        self.icon = QPixmap(ToastNotification.__get_directory() + '/icons/check-mark.png')
-        self.showing_icon = True
+        self.icon = QPixmap(ToastNotification.__get_directory() + '/icons/information.png')
+        self.showing_icon = False
         self.icon_size = QSize(16, 16)
         self.border_radius = 0
         self.fade_in_duration = 250
         self.fade_out_duration = 250
         self.reset_countdown_on_hover = True
         self.stay_on_top = False
-        self.background_color = QColor('#E7F4F9')
-        self.title_color = QColor('#000000')
-        self.text_color = QColor('#515151')
-        self.icon_color = QColor('#228b22')
-        self.icon_separator_color = QColor('#D9D9D9')
-        self.close_button_color = QColor('#000000')
-        self.duration_bar_color = QColor('#228b22')
+        self.background_color = ToastNotification.DEFAULT_BACKGROUND_COLOR
+        self.title_color = ToastNotification.DEFAULT_TITLE_COLOR
+        self.text_color = ToastNotification.DEFAULT_TEXT_COLOR
+        self.icon_color = ToastNotification.DEFAULT_ACCENT_COLOR
+        self.icon_separator_color = ToastNotification.DEFAULT_ICON_SEPARATOR_COLOR
+        self.close_button_color = ToastNotification.DEFAULT_CLOSE_BUTTON_COLOR
+        self.duration_bar_color = ToastNotification.DEFAULT_ACCENT_COLOR
         self.title_font = QFont()
         self.title_font.setFamily('Arial')
         self.title_font.setPointSize(9)
@@ -68,13 +97,13 @@ class ToastNotification(QDialog):
         self.text_font = QFont()
         self.text_font.setFamily('Arial')
         self.text_font.setPointSize(9)
-        self.close_button_icon = QPixmap(ToastNotification.__get_directory() + '/icons/cross.png')
+        self.close_button_icon = QPixmap(ToastNotification.__get_directory() + '/icons/close.png')
         self.close_button_icon_size = QSize(10, 10)
         self.close_button_size = QSize(24, 24)
-        self.close_button_alignment = ToastNotification.CLOSE_BUTTON_TOP
-        self.margins = QMargins(20, 18, 10, 18)
-        self.icon_margins = QMargins(0, 0, 15, 0)
-        self.icon_section_margins = QMargins(0, 0, 15, 0)
+        self.close_button_alignment = ToastButtonAlignment.TOP
+        self.margins = QMargins(23, 18, 10, 18)
+        self.icon_margins = QMargins(0, 0, 18, 0)
+        self.icon_section_margins = QMargins(0, 0, 18, 0)
         self.text_section_margins = QMargins(0, 0, 15, 0)
         self.close_button_margins = QMargins(0, -8, 0, -8)
         self.text_section_spacing = 10
@@ -215,14 +244,14 @@ class ToastNotification(QDialog):
             x, y = self.__calculate_position()
 
             if len(ToastNotification.currently_shown) != 1:
-                if (ToastNotification.position == ToastNotification.BOTTOM_RIGHT
-                        or ToastNotification.position == ToastNotification.BOTTOM_LEFT
-                        or ToastNotification.position == ToastNotification.BOTTOM_MIDDLE):
+                if (ToastNotification.position == ToastPosition.BOTTOM_RIGHT
+                        or ToastNotification.position == ToastPosition.BOTTOM_LEFT
+                        or ToastNotification.position == ToastPosition.BOTTOM_MIDDLE):
                     self.move(x, y - int(self.height() / 1.5))
 
-                elif (ToastNotification.position == ToastNotification.TOP_RIGHT
-                        or ToastNotification.position == ToastNotification.TOP_LEFT
-                        or ToastNotification.position == ToastNotification.TOP_MIDDLE):
+                elif (ToastNotification.position == ToastPosition.TOP_RIGHT
+                        or ToastNotification.position == ToastPosition.TOP_LEFT
+                        or ToastNotification.position == ToastPosition.TOP_MIDDLE):
                     self.move(x, y + int(self.height() / 1.5))
 
                 self.pos_animation = QPropertyAnimation(self, b"pos")
@@ -342,38 +371,38 @@ class ToastNotification(QDialog):
         x = 0
         y = 0
 
-        if ToastNotification.position == ToastNotification.BOTTOM_RIGHT:
+        if ToastNotification.position == ToastPosition.BOTTOM_RIGHT:
             x = (current_screen.geometry().width() - self.notification.width()
                  - ToastNotification.offset_x + current_screen.geometry().x())
             y = (current_screen.geometry().height()
                  - ToastNotification.currently_shown[0].notification.height()
                  - ToastNotification.offset_y + current_screen.geometry().y() - y_offset)
 
-        elif ToastNotification.position == ToastNotification.BOTTOM_LEFT:
+        elif ToastNotification.position == ToastPosition.BOTTOM_LEFT:
             x = current_screen.geometry().x() + ToastNotification.offset_x
             y = (current_screen.geometry().height()
                  - ToastNotification.currently_shown[0].notification.height()
                  - ToastNotification.offset_y + current_screen.geometry().y() - y_offset)
 
-        elif ToastNotification.position == ToastNotification.BOTTOM_MIDDLE:
+        elif ToastNotification.position == ToastPosition.BOTTOM_MIDDLE:
             x = (current_screen.geometry().x()
                  + current_screen.geometry().width() / 2 - self.notification.width() / 2)
             y = (current_screen.geometry().height()
                  - ToastNotification.currently_shown[0].notification.height()
                  - ToastNotification.offset_y + current_screen.geometry().y() - y_offset)
 
-        elif ToastNotification.position == ToastNotification.TOP_RIGHT:
+        elif ToastNotification.position == ToastPosition.TOP_RIGHT:
             x = (current_screen.geometry().width() - self.notification.width()
                  - ToastNotification.offset_x + current_screen.geometry().x())
             y = (current_screen.geometry().y()
                  + ToastNotification.offset_y + y_offset)
 
-        elif ToastNotification.position == ToastNotification.TOP_LEFT:
+        elif ToastNotification.position == ToastPosition.TOP_LEFT:
             x = current_screen.geometry().x() + ToastNotification.offset_x
             y = (current_screen.geometry().y()
                  + ToastNotification.offset_y + y_offset)
 
-        elif ToastNotification.position == ToastNotification.TOP_MIDDLE:
+        elif ToastNotification.position == ToastPosition.TOP_MIDDLE:
             x = (current_screen.geometry().x()
                  + current_screen.geometry().width() / 2
                  - self.notification.width() / 2)
@@ -662,16 +691,16 @@ class ToastNotification(QDialog):
                                  - math.floor(forced_reduced_height / 2))
 
         # Move close button to top, middle, or bottom position
-        if self.close_button_alignment == ToastNotification.CLOSE_BUTTON_TOP:
+        if self.close_button_alignment == ToastButtonAlignment.TOP:
             self.close_button.move(width - self.close_button.width()
                                    - self.close_button_margins.right() - self.margins.right(),
                                    self.margins.top() + self.close_button_margins.top())
-        elif self.close_button_alignment == ToastNotification.CLOSE_BUTTON_MIDDLE:
+        elif self.close_button_alignment == ToastButtonAlignment.MIDDLE:
             self.close_button.move(width - self.close_button.width()
                                    - self.close_button_margins.right() - self.margins.right(),
                                    math.ceil((height - self.close_button.height()
                                               - duration_bar_height) / 2))
-        elif self.close_button_alignment == ToastNotification.CLOSE_BUTTON_BOTTOM:
+        elif self.close_button_alignment == ToastButtonAlignment.BOTTOM:
             self.close_button.move(width - self.close_button.width()
                                    - self.close_button_margins.right() - self.margins.right(),
                                    height - self.close_button.height()
@@ -717,9 +746,21 @@ class ToastNotification(QDialog):
     def getIcon(self) -> QPixmap:
         return self.icon_label.pixmap()
 
-    def setIcon(self, icon: QPixmap):
-        self.icon = icon
-        self.icon_label.setPixmap(icon)
+    def setIcon(self, icon: QPixmap | ToastIcon):
+        if icon == ToastIcon.SUCCESS:
+            self.icon = QPixmap(ToastNotification.__get_directory() + '/icons/success.png')
+        elif icon == ToastIcon.WARNING:
+            self.icon = QPixmap(ToastNotification.__get_directory() + '/icons/warning.png')
+        elif icon == ToastIcon.ERROR:
+            self.icon = QPixmap(ToastNotification.__get_directory() + '/icons/error.png')
+        elif icon == ToastIcon.INFORMATION:
+            self.icon = QPixmap(ToastNotification.__get_directory() + '/icons/information.png')
+        elif icon == ToastIcon.CLOSE:
+            self.icon = QPixmap(ToastNotification.__get_directory() + '/icons/close.png')
+        else:
+            self.icon = icon
+
+        self.icon_label.setPixmap(self.icon)
         self.setIconColor(self.icon_color)
 
     def isShowingIcon(self) -> bool:
@@ -872,8 +913,20 @@ class ToastNotification(QDialog):
     def getCloseButtonIcon(self) -> QPixmap:
         return self.close_button_icon
 
-    def setCloseButtonIcon(self, icon: QPixmap):
-        self.close_button_icon = icon
+    def setCloseButtonIcon(self, icon: QPixmap | ToastIcon):
+        if icon == ToastIcon.SUCCESS:
+            self.close_button_icon = QPixmap(ToastNotification.__get_directory() + '/icons/success.png')
+        elif icon == ToastIcon.WARNING:
+            self.close_button_icon = QPixmap(ToastNotification.__get_directory() + '/icons/warning.png')
+        elif icon == ToastIcon.ERROR:
+            self.close_button_icon = QPixmap(ToastNotification.__get_directory() + '/icons/error.png')
+        elif icon == ToastIcon.INFORMATION:
+            self.close_button_icon = QPixmap(ToastNotification.__get_directory() + '/icons/information.png')
+        elif icon == ToastIcon.CLOSE:
+            self.close_button_icon = QPixmap(ToastNotification.__get_directory() + '/icons/close.png')
+        else:
+            self.close_button_icon = icon
+
         self.close_button.setIcon(QIcon(self.close_button_icon))
         self.setCloseButtonColor(self.close_button_color)
 
@@ -919,13 +972,13 @@ class ToastNotification(QDialog):
         self.close_button_size.setHeight(height)
         self.close_button.setFixedSize(self.close_button_size)
 
-    def getCloseButtonAlignment(self) -> int:
+    def getCloseButtonAlignment(self) -> ToastButtonAlignment:
         return self.close_button_alignment
 
-    def setCloseButtonAlignment(self, alignment: int):
-        if (alignment == ToastNotification.CLOSE_BUTTON_TOP
-                or alignment == ToastNotification.CLOSE_BUTTON_MIDDLE
-                or alignment == ToastNotification.CLOSE_BUTTON_BOTTOM):
+    def setCloseButtonAlignment(self, alignment: ToastButtonAlignment):
+        if (alignment == ToastButtonAlignment.TOP
+                or alignment == ToastButtonAlignment.MIDDLE
+                or alignment == ToastButtonAlignment.BOTTOM):
             self.close_button_alignment = alignment
 
     def getMargins(self) -> QMargins:
@@ -1084,6 +1137,39 @@ class ToastNotification(QDialog):
     def setTextSectionSpacing(self, spacing: int):
         self.text_section_spacing = spacing
 
+    def applyPreset(self, preset: ToastPreset):
+        if preset == ToastPreset.SUCCESS:
+            self.setIcon(QPixmap(self.__get_directory() + "/icons/success.png"))
+            self.setIconColor(ToastNotification.SUCCESS_ACCENT_COLOR)
+            self.setDurationBarColor(ToastNotification.SUCCESS_ACCENT_COLOR)
+
+        elif preset == ToastPreset.WARNING:
+            self.setIcon(QPixmap(self.__get_directory() + "/icons/warning.png"))
+            self.setIconColor(ToastNotification.WARNING_ACCENT_COLOR)
+            self.setDurationBarColor(ToastNotification.WARNING_ACCENT_COLOR)
+
+        elif preset == ToastPreset.ERROR:
+            self.setIcon(QPixmap(self.__get_directory() + "/icons/error.png"))
+            self.setIconColor(ToastNotification.ERROR_ACCENT_COLOR)
+            self.setDurationBarColor(ToastNotification.ERROR_ACCENT_COLOR)
+
+        elif preset == ToastPreset.INFORMATION:
+            self.setIcon(QPixmap(self.__get_directory() + "/icons/information.png"))
+            self.setIconColor(ToastNotification.INFORMATION_ACCENT_COLOR)
+            self.setDurationBarColor(ToastNotification.INFORMATION_ACCENT_COLOR)
+
+        if (preset == ToastPreset.SUCCESS
+                or preset == ToastPreset.WARNING
+                or preset == ToastPreset.ERROR
+                or preset == ToastPreset.INFORMATION):
+            self.setBackgroundColor(ToastNotification.DEFAULT_BACKGROUND_COLOR)
+            self.setCloseButtonColor(ToastNotification.DEFAULT_CLOSE_BUTTON_COLOR)
+            self.showing_icon = True
+            self.setIconSeparatorColor(ToastNotification.DEFAULT_ICON_SEPARATOR_COLOR)
+            self.setShowDurationBar(True)
+            self.setTitleColor(ToastNotification.DEFAULT_TITLE_COLOR)
+            self.setTextColor(ToastNotification.DEFAULT_TEXT_COLOR)
+
     def __update_stylesheet(self):
         self.notification.setStyleSheet('background: {};'
                                         'border-radius: {}px;'
@@ -1182,17 +1268,17 @@ class ToastNotification(QDialog):
         ToastNotification.always_on_main_screen = on
 
     @staticmethod
-    def getPosition() -> int:
+    def getPosition() -> ToastPosition:
         return ToastNotification.position
 
     @staticmethod
     def setPosition(position: int):
-        if (position == ToastNotification.BOTTOM_RIGHT
-                or position == ToastNotification.BOTTOM_LEFT
-                or position == ToastNotification.BOTTOM_MIDDLE
-                or position == ToastNotification.TOP_RIGHT
-                or position == ToastNotification.TOP_LEFT
-                or position == ToastNotification.TOP_MIDDLE):
+        if (position == ToastPosition.BOTTOM_RIGHT
+                or position == ToastPosition.BOTTOM_LEFT
+                or position == ToastPosition.BOTTOM_MIDDLE
+                or position == ToastPosition.TOP_RIGHT
+                or position == ToastPosition.TOP_LEFT
+                or position == ToastPosition.TOP_MIDDLE):
             ToastNotification.position = position
 
     @staticmethod
