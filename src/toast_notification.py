@@ -81,11 +81,11 @@ class ToastNotification(QDialog):
 
         # Init attributes
         self.duration = 5000
-        self.showing_duration_bar = True
+        self.show_duration_bar = True
         self.title = ''
         self.text = ''
         self.icon = QPixmap(ToastNotification.__get_directory() + '/icons/information.png')
-        self.showing_icon = False
+        self.show_icon = False
         self.icon_size = QSize(16, 16)
         self.border_radius = 0
         self.fade_in_duration = 250
@@ -220,7 +220,7 @@ class ToastNotification(QDialog):
             self.duration_timer.stop()
 
             # Reset duration bar if enabled
-            if self.showing_duration_bar:
+            if self.show_duration_bar:
                 self.duration_bar_timer.stop()
                 self.duration_bar_chunk.setFixedWidth(self.width())
                 self.elapsed_time = 0
@@ -231,7 +231,7 @@ class ToastNotification(QDialog):
             self.duration_timer.start(self.duration)
 
             # Restart duration bar animation if enabled
-            if self.showing_duration_bar:
+            if self.show_duration_bar:
                 self.duration_bar_timer.start(ToastNotification.DURATION_BAR_UPDATE_INTERVAL)
 
     def show(self):
@@ -247,7 +247,7 @@ class ToastNotification(QDialog):
                 self.duration_timer.start(self.duration)
 
             # Start duration bar update timer
-            if self.duration != 0 and self.showing_duration_bar:
+            if self.duration != 0 and self.show_duration_bar:
                 self.duration_bar_timer.start(ToastNotification.DURATION_BAR_UPDATE_INTERVAL)
 
             # Calculate position and show (animate position too if not first notification)
@@ -438,13 +438,13 @@ class ToastNotification(QDialog):
                                + text_height + self.text_section_margins.bottom())
 
         # Calculate duration bar height
-        duration_bar_height = 0 if not self.showing_duration_bar else self.duration_bar_container.height()
+        duration_bar_height = 0 if not self.show_duration_bar else self.duration_bar_container.height()
 
         # Calculate icon section width and height
         icon_section_width = 0
         icon_section_height = 0
 
-        if self.showing_icon:
+        if self.show_icon:
             icon_section_width = (self.icon_section_margins.left()
                                   + self.icon_margins.left() + self.icon_label.width()
                                   + self.icon_margins.right() + self.icon_separator.width()
@@ -610,7 +610,7 @@ class ToastNotification(QDialog):
                                                      close_button_section_height)
                                                  - icon_section_height)
 
-        if self.showing_icon:
+        if self.show_icon:
             # Move icon
             self.icon_label.move(self.margins.left()
                                  + self.icon_section_margins.left()
@@ -653,7 +653,7 @@ class ToastNotification(QDialog):
         self.text_label.resize(text_width, text_height)
 
         # Move title and text labels
-        if self.showing_icon:
+        if self.show_icon:
             self.title_label.move(self.margins.left()
                                   + self.icon_section_margins.left()
                                   + self.icon_margins.left()
@@ -718,7 +718,7 @@ class ToastNotification(QDialog):
                                    - self.close_button_margins.bottom() - duration_bar_height)
 
         # Resize, move, and show duration bar if enabled
-        if self.showing_duration_bar:
+        if self.show_duration_bar:
             self.duration_bar_container.setFixedWidth(width)
             self.duration_bar_container.move(0, height - duration_bar_height)
             self.duration_bar.setFixedWidth(width)
@@ -733,11 +733,11 @@ class ToastNotification(QDialog):
     def setDuration(self, duration: int):
         self.duration = duration
 
-    def isShowingDurationBar(self) -> bool:
-        return self.showing_duration_bar
+    def isShowDurationBar(self) -> bool:
+        return self.show_duration_bar
 
     def setShowDurationBar(self, on: bool):
-        self.showing_duration_bar = on
+        self.show_duration_bar = on
 
     def getTitle(self) -> str:
         return self.title
@@ -773,11 +773,11 @@ class ToastNotification(QDialog):
         self.icon_label.setPixmap(self.icon)
         self.setIconColor(self.icon_color)
 
-    def isShowingIcon(self) -> bool:
-        return self.showing_icon
+    def isShowIcon(self) -> bool:
+        return self.show_icon
 
     def setShowIcon(self, on: bool):
-        self.showing_icon = on
+        self.show_icon = on
 
     def getIconSize(self) -> QSize:
         return self.icon_size
@@ -825,13 +825,13 @@ class ToastNotification(QDialog):
     def setFadeOutDuration(self, duration: int):
         self.fade_out_duration = duration
 
-    def resettingCountdownOnHover(self) -> bool:
+    def isResetCountdownOnHover(self) -> bool:
         return self.reset_countdown_on_hover
 
     def setResetCountdownOnHover(self, on: bool):
         self.reset_countdown_on_hover = on
 
-    def stayingOnTop(self) -> bool:
+    def isStayOnTop(self) -> bool:
         return self.stay_on_top
 
     def setStayOnTop(self, on: bool):
@@ -1174,7 +1174,7 @@ class ToastNotification(QDialog):
                 or preset == ToastPreset.INFORMATION):
             self.setBackgroundColor(ToastNotification.DEFAULT_BACKGROUND_COLOR)
             self.setCloseButtonColor(ToastNotification.DEFAULT_CLOSE_BUTTON_COLOR)
-            self.showing_icon = True
+            self.show_icon = True
             self.setIconSeparatorColor(ToastNotification.DEFAULT_ICON_SEPARATOR_COLOR)
             self.setShowDurationBar(True)
             self.setTitleColor(ToastNotification.DEFAULT_TITLE_COLOR)
@@ -1186,7 +1186,7 @@ class ToastNotification(QDialog):
                 or preset == ToastPreset.INFORMATION_DARK):
             self.setBackgroundColor(ToastNotification.DEFAULT_BACKGROUND_COLOR_DARK)
             self.setCloseButtonColor(ToastNotification.DEFAULT_CLOSE_BUTTON_COLOR_DARK)
-            self.showing_icon = True
+            self.show_icon = True
             self.setIconSeparatorColor(ToastNotification.DEFAULT_ICON_SEPARATOR_COLOR_DARK)
             self.setShowDurationBar(True)
             self.setTitleColor(ToastNotification.DEFAULT_TITLE_COLOR_DARK)
