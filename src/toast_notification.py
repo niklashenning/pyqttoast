@@ -11,6 +11,10 @@ class ToastPreset(Enum):
     WARNING = 2
     ERROR = 3
     INFORMATION = 4
+    SUCCESS_DARK = 5
+    WARNING_DARK = 6
+    ERROR_DARK = 7
+    INFORMATION_DARK = 8
 
 
 class ToastIcon(Enum):
@@ -62,6 +66,11 @@ class ToastNotification(QDialog):
     DEFAULT_TEXT_COLOR = QColor('#5C5C5C')
     DEFAULT_ICON_SEPARATOR_COLOR = QColor('#D9D9D9')
     DEFAULT_CLOSE_BUTTON_COLOR = QColor('#000000')
+    DEFAULT_BACKGROUND_COLOR_DARK = QColor('#464646')
+    DEFAULT_TITLE_COLOR_DARK = QColor('#FFFFFF')
+    DEFAULT_TEXT_COLOR_DARK = QColor('#D0D0D0')
+    DEFAULT_ICON_SEPARATOR_COLOR_DARK = QColor('#585858')
+    DEFAULT_CLOSE_BUTTON_COLOR_DARK = QColor('#C9C9C9')
 
     # Close event
     closed = pyqtSignal()
@@ -158,6 +167,7 @@ class ToastNotification(QDialog):
 
         # Icon
         self.icon_label = QLabel(self.notification)
+        self.icon_label.setStyleSheet('background: transparent;')
 
         # Icon separator
         self.icon_separator = QWidget(self.notification)
@@ -1138,23 +1148,23 @@ class ToastNotification(QDialog):
         self.text_section_spacing = spacing
 
     def applyPreset(self, preset: ToastPreset):
-        if preset == ToastPreset.SUCCESS:
-            self.setIcon(QPixmap(self.__get_directory() + "/icons/success.png"))
+        if preset == ToastPreset.SUCCESS or preset == ToastPreset.SUCCESS_DARK:
+            self.setIcon(ToastIcon.SUCCESS)
             self.setIconColor(ToastNotification.SUCCESS_ACCENT_COLOR)
             self.setDurationBarColor(ToastNotification.SUCCESS_ACCENT_COLOR)
 
-        elif preset == ToastPreset.WARNING:
-            self.setIcon(QPixmap(self.__get_directory() + "/icons/warning.png"))
+        elif preset == ToastPreset.WARNING or preset == ToastPreset.WARNING_DARK:
+            self.setIcon(ToastIcon.WARNING)
             self.setIconColor(ToastNotification.WARNING_ACCENT_COLOR)
             self.setDurationBarColor(ToastNotification.WARNING_ACCENT_COLOR)
 
-        elif preset == ToastPreset.ERROR:
-            self.setIcon(QPixmap(self.__get_directory() + "/icons/error.png"))
+        elif preset == ToastPreset.ERROR or preset == ToastPreset.ERROR_DARK:
+            self.setIcon(ToastIcon.ERROR)
             self.setIconColor(ToastNotification.ERROR_ACCENT_COLOR)
             self.setDurationBarColor(ToastNotification.ERROR_ACCENT_COLOR)
 
-        elif preset == ToastPreset.INFORMATION:
-            self.setIcon(QPixmap(self.__get_directory() + "/icons/information.png"))
+        elif preset == ToastPreset.INFORMATION or preset == ToastPreset.INFORMATION_DARK:
+            self.setIcon(ToastIcon.INFORMATION)
             self.setIconColor(ToastNotification.INFORMATION_ACCENT_COLOR)
             self.setDurationBarColor(ToastNotification.INFORMATION_ACCENT_COLOR)
 
@@ -1169,6 +1179,18 @@ class ToastNotification(QDialog):
             self.setShowDurationBar(True)
             self.setTitleColor(ToastNotification.DEFAULT_TITLE_COLOR)
             self.setTextColor(ToastNotification.DEFAULT_TEXT_COLOR)
+
+        elif (preset == ToastPreset.SUCCESS_DARK
+                or preset == ToastPreset.WARNING_DARK
+                or preset == ToastPreset.ERROR_DARK
+                or preset == ToastPreset.INFORMATION_DARK):
+            self.setBackgroundColor(ToastNotification.DEFAULT_BACKGROUND_COLOR_DARK)
+            self.setCloseButtonColor(ToastNotification.DEFAULT_CLOSE_BUTTON_COLOR_DARK)
+            self.showing_icon = True
+            self.setIconSeparatorColor(ToastNotification.DEFAULT_ICON_SEPARATOR_COLOR_DARK)
+            self.setShowDurationBar(True)
+            self.setTitleColor(ToastNotification.DEFAULT_TITLE_COLOR_DARK)
+            self.setTextColor(ToastNotification.DEFAULT_TEXT_COLOR_DARK)
 
     def __update_stylesheet(self):
         self.notification.setStyleSheet('background: {};'
