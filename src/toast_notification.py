@@ -118,6 +118,7 @@ class ToastNotification(QDialog):
         self.text_section_spacing = 10
 
         self.elapsed_time = 0
+        self.fading_out = False
 
         # Window settings
         self.setWindowFlags(Qt.Window | Qt.CustomizeWindowHint | Qt.FramelessWindowHint)
@@ -156,7 +157,7 @@ class ToastNotification(QDialog):
         # Close button
         self.close_button = QPushButton(self.notification)
         self.close_button.setCursor(Qt.PointingHandCursor)
-        self.close_button.clicked.connect(self.__fade_out)
+        self.close_button.clicked.connect(self.hide)
         self.close_button.setStyleSheet('background: transparent;')
 
         # Title label
@@ -290,9 +291,11 @@ class ToastNotification(QDialog):
             ToastNotification.queue.append(self)
 
     def hide(self):
-        if self.duration != 0:
-            self.duration_timer.stop()
-        self.__fade_out()
+        if not self.fading_out:
+            if self.duration != 0:
+                self.duration_timer.stop()
+                self.fading_out = True
+            self.__fade_out()
 
     def __fade_out(self):
         self.fade_out_animation = QPropertyAnimation(self.opacity_effect, b"opacity")
@@ -308,6 +311,7 @@ class ToastNotification(QDialog):
         if self in ToastNotification.currently_shown:
             ToastNotification.currently_shown.remove(self)
             self.elapsed_time = 0
+            self.fading_out = False
 
             # Emit signal
             self.closed.emit()
