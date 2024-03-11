@@ -774,7 +774,7 @@ class ToastNotification(QDialog):
         else:
             self.icon = icon
 
-        self.icon_label.setPixmap(self.icon)
+        self.icon_label.setPixmap(self.icon.scaled(self.icon_size))
         self.setIconColor(self.icon_color)
 
     def isShowIcon(self) -> bool:
@@ -788,27 +788,24 @@ class ToastNotification(QDialog):
 
     def setIconSize(self, size: QSize):
         self.icon_size = size
-        self.icon = self.icon.scaled(size.width(), size.height())
-        self.icon_label.setPixmap(self.icon)
         self.icon_label.setFixedSize(size)
+        self.setIcon(self.icon)
 
     def getIconWidth(self) -> int:
         return self.icon_size.width()
 
     def setIconWidth(self, width: int):
         self.icon_size.setWidth(width)
-        self.icon = self.icon.scaled(self.icon_size.width(), self.icon_size.height())
-        self.icon_label.setPixmap(self.icon)
         self.icon_label.setFixedSize(self.icon_size)
+        self.setIcon(self.icon)
 
     def getIconHeight(self) -> int:
         return self.icon_size.height()
 
     def setIconHeight(self, height: int):
         self.icon_size.setHeight(height)
-        self.icon = self.icon.scaled(self.icon_size.width(), self.icon_size.height())
-        self.icon_label.setPixmap(self.icon)
         self.icon_label.setFixedSize(self.icon_size)
+        self.setIcon(self.icon)
 
     def getBorderRadius(self) -> int:
         return self.border_radius
