@@ -704,6 +704,15 @@ class ToastNotification(QDialog):
                                  + math.ceil(forced_additional_height / 2)
                                  - math.floor(forced_reduced_height / 2))
 
+        # Adjust label position if either title or text is empty
+        if self.title == '' and self.text != '':
+            self.text_label.move(self.text_label.x(),
+                                 int((height - text_height - duration_bar_height) / 2))
+
+        elif self.title != '' and self.text == '':
+            self.title_label.move(self.title_label.x(),
+                                  int((height - title_height - duration_bar_height) / 2))
+
         # Move close button to top, middle, or bottom position
         if self.close_button_alignment == ToastButtonAlignment.TOP:
             self.close_button.move(width - self.close_button.width()
