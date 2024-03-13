@@ -84,7 +84,7 @@ class ToastNotification(QDialog):
         self.show_duration_bar = True
         self.title = ''
         self.text = ''
-        self.icon = QPixmap(ToastNotification.__get_directory() + '/icons/information.png')
+        self.icon = self.__get_icon_from_enum(ToastIcon.INFORMATION)
         self.show_icon = False
         self.icon_size = QSize(18, 18)
         self.border_radius = 0
@@ -97,7 +97,7 @@ class ToastNotification(QDialog):
         self.text_color = ToastNotification.DEFAULT_TEXT_COLOR
         self.icon_color = ToastNotification.DEFAULT_ACCENT_COLOR
         self.icon_separator_color = ToastNotification.DEFAULT_ICON_SEPARATOR_COLOR
-        self.close_button_color = ToastNotification.DEFAULT_CLOSE_BUTTON_COLOR
+        self.close_button_icon_color = ToastNotification.DEFAULT_CLOSE_BUTTON_COLOR
         self.duration_bar_color = ToastNotification.DEFAULT_ACCENT_COLOR
         self.title_font = QFont()
         self.title_font.setFamily('Arial')
@@ -106,7 +106,7 @@ class ToastNotification(QDialog):
         self.text_font = QFont()
         self.text_font.setFamily('Arial')
         self.text_font.setPointSize(9)
-        self.close_button_icon = QPixmap(ToastNotification.__get_directory() + '/icons/close.png')
+        self.close_button_icon = self.__get_icon_from_enum(ToastIcon.CLOSE)
         self.close_button_icon_size = QSize(10, 10)
         self.close_button_size = QSize(24, 24)
         self.close_button_alignment = ToastButtonAlignment.TOP
@@ -198,7 +198,7 @@ class ToastNotification(QDialog):
         self.setTextColor(self.text_color)
         self.setBorderRadius(self.border_radius)
         self.setIconSeparatorColor(self.icon_separator_color)
-        self.setCloseButtonColor(self.close_button_color)
+        self.setCloseButtonIconColor(self.close_button_icon_color)
         self.setDurationBarColor(self.duration_bar_color)
         self.setTitleFont(self.title_font)
         self.setTextFont(self.text_font)
@@ -267,7 +267,7 @@ class ToastNotification(QDialog):
 
                 self.pos_animation = QPropertyAnimation(self, b"pos")
                 self.pos_animation.setEndValue(QPoint(x, y))
-                self.pos_animation.setDuration(250)
+                self.pos_animation.setDuration(self.fade_in_duration)
                 self.pos_animation.start()
             else:
                 self.move(x, y)
@@ -770,16 +770,8 @@ class ToastNotification(QDialog):
         return self.icon_widget.pixmap()
 
     def setIcon(self, icon: QPixmap | ToastIcon):
-        if icon == ToastIcon.SUCCESS:
-            self.icon = QPixmap(ToastNotification.__get_directory() + '/icons/success.png')
-        elif icon == ToastIcon.WARNING:
-            self.icon = QPixmap(ToastNotification.__get_directory() + '/icons/warning.png')
-        elif icon == ToastIcon.ERROR:
-            self.icon = QPixmap(ToastNotification.__get_directory() + '/icons/error.png')
-        elif icon == ToastIcon.INFORMATION:
-            self.icon = QPixmap(ToastNotification.__get_directory() + '/icons/information.png')
-        elif icon == ToastIcon.CLOSE:
-            self.icon = QPixmap(ToastNotification.__get_directory() + '/icons/close.png')
+        if type(icon) == ToastIcon:
+            self.icon = self.__get_icon_from_enum(icon)
         else:
             self.icon = icon
 
@@ -883,10 +875,10 @@ class ToastNotification(QDialog):
         self.__update_stylesheet()
 
     def getCloseButtonColor(self) -> QColor:
-        return self.close_button_color
+        return self.close_button_icon_color
 
-    def setCloseButtonColor(self, color: QColor):
-        self.close_button_color = color
+    def setCloseButtonIconColor(self, color: QColor):
+        self.close_button_icon_color = color
 
         recolored_image = self.__recolor_image(self.close_button.icon().pixmap(
                                                self.close_button.iconSize()).toImage(),
@@ -920,21 +912,13 @@ class ToastNotification(QDialog):
         return self.close_button_icon
 
     def setCloseButtonIcon(self, icon: QPixmap | ToastIcon):
-        if icon == ToastIcon.SUCCESS:
-            self.close_button_icon = QPixmap(ToastNotification.__get_directory() + '/icons/success.png')
-        elif icon == ToastIcon.WARNING:
-            self.close_button_icon = QPixmap(ToastNotification.__get_directory() + '/icons/warning.png')
-        elif icon == ToastIcon.ERROR:
-            self.close_button_icon = QPixmap(ToastNotification.__get_directory() + '/icons/error.png')
-        elif icon == ToastIcon.INFORMATION:
-            self.close_button_icon = QPixmap(ToastNotification.__get_directory() + '/icons/information.png')
-        elif icon == ToastIcon.CLOSE:
-            self.close_button_icon = QPixmap(ToastNotification.__get_directory() + '/icons/close.png')
+        if type(icon) == ToastIcon:
+            self.close_button_icon = self.__get_icon_from_enum(icon)
         else:
             self.close_button_icon = icon
 
         self.close_button.setIcon(QIcon(self.close_button_icon))
-        self.setCloseButtonColor(self.close_button_color)
+        self.setCloseButtonIconColor(self.close_button_icon_color)
 
     def getCloseButtonIconSize(self) -> QSize:
         return self.close_button_icon_size
@@ -1156,7 +1140,7 @@ class ToastNotification(QDialog):
                 or preset == ToastPreset.ERROR
                 or preset == ToastPreset.INFORMATION):
             self.setBackgroundColor(ToastNotification.DEFAULT_BACKGROUND_COLOR)
-            self.setCloseButtonColor(ToastNotification.DEFAULT_CLOSE_BUTTON_COLOR)
+            self.setCloseButtonIconColor(ToastNotification.DEFAULT_CLOSE_BUTTON_COLOR)
             self.show_icon = True
             self.setIconSeparatorColor(ToastNotification.DEFAULT_ICON_SEPARATOR_COLOR)
             self.setShowDurationBar(True)
@@ -1168,7 +1152,7 @@ class ToastNotification(QDialog):
                 or preset == ToastPreset.ERROR_DARK
                 or preset == ToastPreset.INFORMATION_DARK):
             self.setBackgroundColor(ToastNotification.DEFAULT_BACKGROUND_COLOR_DARK)
-            self.setCloseButtonColor(ToastNotification.DEFAULT_CLOSE_BUTTON_COLOR_DARK)
+            self.setCloseButtonIconColor(ToastNotification.DEFAULT_CLOSE_BUTTON_COLOR_DARK)
             self.show_icon = True
             self.setIconSeparatorColor(ToastNotification.DEFAULT_ICON_SEPARATOR_COLOR_DARK)
             self.setShowDurationBar(True)
@@ -1222,6 +1206,21 @@ class ToastNotification(QDialog):
     @staticmethod
     def __get_directory():
         return os.path.dirname(os.path.realpath(__file__))
+
+    @staticmethod
+    def __get_icon_from_enum(enum_icon: ToastIcon):
+        if enum_icon == ToastIcon.SUCCESS:
+            return QPixmap(ToastNotification.__get_directory() + '/icons/success.png')
+        elif enum_icon == ToastIcon.WARNING:
+            return QPixmap(ToastNotification.__get_directory() + '/icons/warning.png')
+        elif enum_icon == ToastIcon.ERROR:
+            return QPixmap(ToastNotification.__get_directory() + '/icons/error.png')
+        elif enum_icon == ToastIcon.INFORMATION:
+            return QPixmap(ToastNotification.__get_directory() + '/icons/information.png')
+        elif enum_icon == ToastIcon.CLOSE:
+            return QPixmap(ToastNotification.__get_directory() + '/icons/close.png')
+        else:
+            return None
 
     @staticmethod
     def getMaximumOnScreen():
