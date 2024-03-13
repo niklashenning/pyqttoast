@@ -86,7 +86,7 @@ class ToastNotification(QDialog):
         self.text = ''
         self.icon = QPixmap(ToastNotification.__get_directory() + '/icons/information.png')
         self.show_icon = False
-        self.icon_size = QSize(16, 16)
+        self.icon_size = QSize(18, 18)
         self.border_radius = 0
         self.fade_in_duration = 250
         self.fade_out_duration = 250
@@ -110,9 +110,9 @@ class ToastNotification(QDialog):
         self.close_button_icon_size = QSize(10, 10)
         self.close_button_size = QSize(24, 24)
         self.close_button_alignment = ToastButtonAlignment.TOP
-        self.margins = QMargins(23, 18, 10, 18)
-        self.icon_margins = QMargins(0, 0, 18, 0)
-        self.icon_section_margins = QMargins(0, 0, 18, 0)
+        self.margins = QMargins(20, 18, 10, 18)
+        self.icon_margins = QMargins(0, 0, 15, 0)
+        self.icon_section_margins = QMargins(0, 0, 15, 0)
         self.text_section_margins = QMargins(0, 0, 15, 0)
         self.close_button_margins = QMargins(0, -8, 0, -8)
         self.text_section_spacing = 10
@@ -166,9 +166,9 @@ class ToastNotification(QDialog):
         # Text label
         self.text_label = QLabel(self.notification)
 
-        # Icon
-        self.icon_label = QLabel(self.notification)
-        self.icon_label.setStyleSheet('background: transparent;')
+        # Icon (QPushButton instead of QLabel to get better icon quality)
+        self.icon_widget = QPushButton(self.notification)
+        self.icon_widget.setStyleSheet('background: transparent;')
 
         # Icon separator
         self.icon_separator = QWidget(self.notification)
@@ -450,11 +450,11 @@ class ToastNotification(QDialog):
 
         if self.show_icon:
             icon_section_width = (self.icon_section_margins.left()
-                                  + self.icon_margins.left() + self.icon_label.width()
+                                  + self.icon_margins.left() + self.icon_widget.width()
                                   + self.icon_margins.right() + self.icon_separator.width()
                                   + self.icon_section_margins.right())
             icon_section_height = (self.icon_section_margins.top() + self.icon_margins.top()
-                                   + self.icon_label.height() + self.icon_margins.bottom()
+                                   + self.icon_widget.height() + self.icon_margins.bottom()
                                    + self.icon_section_margins.bottom())
 
         # Calculate height and close button section
@@ -616,22 +616,22 @@ class ToastNotification(QDialog):
 
         if self.show_icon:
             # Move icon
-            self.icon_label.move(self.margins.left()
-                                 + self.icon_section_margins.left()
-                                 + self.icon_margins.left(),
-                                 self.margins.top()
-                                 + self.icon_section_margins.top()
-                                 + self.icon_margins.top()
-                                 + math.ceil(height_icon_section_height_difference / 2)
-                                 + math.ceil(forced_additional_height / 2)
-                                 - math.floor(forced_reduced_height / 2))
+            self.icon_widget.move(self.margins.left()
+                                  + self.icon_section_margins.left()
+                                  + self.icon_margins.left(),
+                                  self.margins.top()
+                                  + self.icon_section_margins.top()
+                                  + self.icon_margins.top()
+                                  + math.ceil(height_icon_section_height_difference / 2)
+                                  + math.ceil(forced_additional_height / 2)
+                                  - math.floor(forced_reduced_height / 2))
 
             # Move and resize icon separator
             self.icon_separator.setFixedHeight(text_section_height)
             self.icon_separator.move(self.margins.left()
                                      + self.icon_section_margins.left()
                                      + self.icon_margins.left()
-                                     + self.icon_label.width()
+                                     + self.icon_widget.width()
                                      + self.icon_margins.right(),
                                      self.margins.top()
                                      + self.icon_section_margins.top()
@@ -639,11 +639,11 @@ class ToastNotification(QDialog):
                                      - math.floor(forced_reduced_height / 2))
 
             # Show icon section
-            self.icon_label.setVisible(True)
+            self.icon_widget.setVisible(True)
             self.icon_separator.setVisible(True)
         else:
             # Hide icon section
-            self.icon_label.setVisible(False)
+            self.icon_widget.setVisible(False)
             self.icon_separator.setVisible(False)
 
         # Calculate difference between height and height of text section
@@ -661,7 +661,7 @@ class ToastNotification(QDialog):
             self.title_label.move(self.margins.left()
                                   + self.icon_section_margins.left()
                                   + self.icon_margins.left()
-                                  + self.icon_label.width()
+                                  + self.icon_widget.width()
                                   + self.icon_margins.right()
                                   + self.icon_section_margins.right()
                                   + self.text_section_margins.left(),
@@ -674,7 +674,7 @@ class ToastNotification(QDialog):
             self.text_label.move(self.margins.left()
                                  + self.icon_section_margins.left()
                                  + self.icon_margins.left()
-                                 + self.icon_label.width()
+                                 + self.icon_widget.width()
                                  + self.icon_margins.right()
                                  + self.icon_section_margins.right()
                                  + self.text_section_margins.left(),
@@ -767,7 +767,7 @@ class ToastNotification(QDialog):
         self.text_label.setText(text)
 
     def getIcon(self) -> QPixmap:
-        return self.icon_label.pixmap()
+        return self.icon_widget.pixmap()
 
     def setIcon(self, icon: QPixmap | ToastIcon):
         if icon == ToastIcon.SUCCESS:
@@ -783,7 +783,7 @@ class ToastNotification(QDialog):
         else:
             self.icon = icon
 
-        self.icon_label.setPixmap(self.icon.scaled(self.icon_size))
+        self.icon_widget.setIcon(QIcon(self.icon))
         self.setIconColor(self.icon_color)
 
     def isShowIcon(self) -> bool:
@@ -797,23 +797,8 @@ class ToastNotification(QDialog):
 
     def setIconSize(self, size: QSize):
         self.icon_size = size
-        self.icon_label.setFixedSize(size)
-        self.setIcon(self.icon)
-
-    def getIconWidth(self) -> int:
-        return self.icon_size.width()
-
-    def setIconWidth(self, width: int):
-        self.icon_size.setWidth(width)
-        self.icon_label.setFixedSize(self.icon_size)
-        self.setIcon(self.icon)
-
-    def getIconHeight(self) -> int:
-        return self.icon_size.height()
-
-    def setIconHeight(self, height: int):
-        self.icon_size.setHeight(height)
-        self.icon_label.setFixedSize(self.icon_size)
+        self.icon_widget.setFixedSize(size)
+        self.icon_widget.setIconSize(size)
         self.setIcon(self.icon)
 
     def getBorderRadius(self) -> int:
@@ -883,11 +868,12 @@ class ToastNotification(QDialog):
     def setIconColor(self, color: QColor):
         self.icon_color = color
 
-        recolored_image = self.__recolor_image(self.icon_label.pixmap().toImage(),
-                                               self.icon_label.width(),
-                                               self.icon_label.height(),
+        recolored_image = self.__recolor_image(self.icon_widget.icon().pixmap(
+                                               self.icon_widget.iconSize()).toImage(),
+                                               self.icon_widget.iconSize().width(),
+                                               self.icon_widget.iconSize().height(),
                                                color)
-        self.icon_label.setPixmap(QPixmap(recolored_image))
+        self.icon_widget.setIcon(QIcon(QPixmap(recolored_image)))
 
     def getIconSeparatorColor(self) -> QColor:
         return self.icon_separator_color
@@ -956,20 +942,7 @@ class ToastNotification(QDialog):
     def setCloseButtonIconSize(self, size: QSize):
         self.close_button_icon_size = size
         self.close_button.setIconSize(size)
-
-    def getCloseButtonIconWidth(self) -> int:
-        return self.close_button_icon_size.width()
-
-    def setCloseButtonIconWidth(self, width: int):
-        self.close_button_icon_size.setWidth(width)
-        self.close_button.setIconSize(self.close_button_icon_size)
-
-    def getCloseButtonIconHeight(self) -> int:
-        return self.close_button_icon_size.height()
-
-    def setCloseButtonIconHeight(self, height: int):
-        self.close_button_icon_size.setHeight(height)
-        self.close_button.setIconSize(self.close_button_icon_size)
+        self.setCloseButtonIcon(self.close_button_icon)
 
     def getCloseButtonSize(self) -> QSize:
         return self.close_button_size
