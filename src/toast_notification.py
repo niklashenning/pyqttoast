@@ -131,24 +131,19 @@ class ToastNotification(QDialog):
 
         # Drop shadow (has to be drawn manually since only one graphics effect can be applied)
         self.drop_shadow_layer_1 = QWidget(self)
-        self.drop_shadow_layer_1.setStyleSheet('background: rgba(0, 0, 0, 3);'
-                                               'border-radius: 8px;')
+        self.drop_shadow_layer_1.setObjectName('toast-drop-shadow-layer-1')
 
         self.drop_shadow_layer_2 = QWidget(self)
-        self.drop_shadow_layer_2.setStyleSheet('background: rgba(0, 0, 0, 5);'
-                                               'border-radius: 8px;')
+        self.drop_shadow_layer_2.setObjectName('toast-drop-shadow-layer-2')
 
         self.drop_shadow_layer_3 = QWidget(self)
-        self.drop_shadow_layer_3.setStyleSheet('background: rgba(0, 0, 0, 6);'
-                                               'border-radius: 8px;')
+        self.drop_shadow_layer_3.setObjectName('toast-drop-shadow-layer-3')
 
         self.drop_shadow_layer_4 = QWidget(self)
-        self.drop_shadow_layer_4.setStyleSheet('background: rgba(0, 0, 0, 9);'
-                                               'border-radius: 8px;')
+        self.drop_shadow_layer_4.setObjectName('toast-drop-shadow-layer-4')
 
         self.drop_shadow_layer_5 = QWidget(self)
-        self.drop_shadow_layer_5.setStyleSheet('background: rgba(0, 0, 0, 10);'
-                                               'border-radius: 8px;')
+        self.drop_shadow_layer_5.setObjectName('toast-drop-shadow-layer-5')
 
         # Opacity effect for fading animations
         self.opacity_effect = QGraphicsOpacityEffect()
@@ -159,7 +154,7 @@ class ToastNotification(QDialog):
         self.close_button = QPushButton(self.notification)
         self.close_button.setCursor(Qt.CursorShape.PointingHandCursor)
         self.close_button.clicked.connect(self.hide)
-        self.close_button.setStyleSheet('background: transparent;')
+        self.close_button.setObjectName('toast-close-button')
 
         # Title label
         self.title_label = QLabel(self.notification)
@@ -169,7 +164,7 @@ class ToastNotification(QDialog):
 
         # Icon (QPushButton instead of QLabel to get better icon quality)
         self.icon_widget = QPushButton(self.notification)
-        self.icon_widget.setStyleSheet('background: transparent;')
+        self.icon_widget.setObjectName('toast-icon-widget')
 
         # Icon separator
         self.icon_separator = QWidget(self.notification)
@@ -215,6 +210,9 @@ class ToastNotification(QDialog):
         # Timer for updating the duration bar
         self.duration_bar_timer = QTimer(self)
         self.duration_bar_timer.timeout.connect(self.__update_duration_bar)
+
+        # Apply stylesheet
+        self.setStyleSheet(open(self.__get_directory() + '/css/toast_notification.css').read())
 
     def enterEvent(self, event):
         # Reset timer if hovered and resetting is enabled
