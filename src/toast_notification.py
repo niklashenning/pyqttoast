@@ -1,9 +1,10 @@
 import math
 import os
 from enum import Enum
-from PyQt5.QtCore import Qt, QPropertyAnimation, QPoint, QTimer, QSize, QMargins, QRect, pyqtSignal
-from PyQt5.QtGui import QPixmap, QIcon, QColor, QFont, QImage, qRgba, QFontMetrics
-from PyQt5.QtWidgets import QDialog, QPushButton, QLabel, QGraphicsOpacityEffect, QWidget, QApplication
+from qtpy.QtGui import QGuiApplication
+from qtpy.QtCore import Qt, QPropertyAnimation, QPoint, QTimer, QSize, QMargins, QRect, Signal
+from qtpy.QtGui import QPixmap, QIcon, QColor, QFont, QImage, qRgba, QFontMetrics
+from qtpy.QtWidgets import QDialog, QPushButton, QLabel, QGraphicsOpacityEffect, QWidget
 
 
 class ToastPreset(Enum):
@@ -73,7 +74,7 @@ class ToastNotification(QDialog):
     DEFAULT_CLOSE_BUTTON_COLOR_DARK = QColor('#C9C9C9')
 
     # Close event
-    closed = pyqtSignal()
+    closed = Signal()
 
     def __init__(self, parent):
 
@@ -130,19 +131,19 @@ class ToastNotification(QDialog):
 
         # Drop shadow (has to be drawn manually since only one graphics effect can be applied)
         self.drop_shadow_layer_1 = QWidget(self)
-        self.drop_shadow_layer_1.setStyleSheet('background: rgba(0, 0, 0, 2);'
+        self.drop_shadow_layer_1.setStyleSheet('background: rgba(0, 0, 0, 3);'
                                                'border-radius: 8px;')
 
         self.drop_shadow_layer_2 = QWidget(self)
-        self.drop_shadow_layer_2.setStyleSheet('background: rgba(0, 0, 0, 3);'
+        self.drop_shadow_layer_2.setStyleSheet('background: rgba(0, 0, 0, 5);'
                                                'border-radius: 8px;')
 
         self.drop_shadow_layer_3 = QWidget(self)
-        self.drop_shadow_layer_3.setStyleSheet('background: rgba(0, 0, 0, 5);'
+        self.drop_shadow_layer_3.setStyleSheet('background: rgba(0, 0, 0, 6);'
                                                'border-radius: 8px;')
 
         self.drop_shadow_layer_4 = QWidget(self)
-        self.drop_shadow_layer_4.setStyleSheet('background: rgba(0, 0, 0, 7);'
+        self.drop_shadow_layer_4.setStyleSheet('background: rgba(0, 0, 0, 9);'
                                                'border-radius: 8px;')
 
         self.drop_shadow_layer_5 = QWidget(self)
@@ -156,7 +157,7 @@ class ToastNotification(QDialog):
 
         # Close button
         self.close_button = QPushButton(self.notification)
-        self.close_button.setCursor(Qt.PointingHandCursor)
+        self.close_button.setCursor(Qt.CursorShape.PointingHandCursor)
         self.close_button.clicked.connect(self.hide)
         self.close_button.setStyleSheet('background: transparent;')
 
@@ -367,16 +368,17 @@ class ToastNotification(QDialog):
             y_offset += n.notification.height() + ToastNotification.spacing
 
         # Get screen
-        primary_screen = QApplication.desktop().screen(QApplication.desktop().primaryScreen())
+        primary_screen = QGuiApplication.primaryScreen()
         current_screen = None
 
         if ToastNotification.always_on_main_screen:
             current_screen = primary_screen
         else:
-            for i in range(QApplication.desktop().screenCount()):
-                if self.parent().geometry().intersects(QApplication.desktop().screen(i).geometry()):
+            screens = QGuiApplication.screens()
+            for screen in screens:
+                if self.parent().geometry().intersects(screen.geometry()):
                     if current_screen is None:
-                        current_screen = QApplication.desktop().screen(i)
+                        current_screen = screen
                     else:
                         current_screen = primary_screen
                         break
