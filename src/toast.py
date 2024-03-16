@@ -156,6 +156,11 @@ class Toast(QDialog):
         self.setIcon(self.__icon)
         self.setIconSize(self.__icon_size)
         self.setIconColor(self.__icon_color)
+        self.setCloseButtonIcon(self.__close_button_icon)
+        self.setCloseButtonIconSize(self.__close_button_icon_size)
+        self.setCloseButtonSize(self.__close_button_size)
+        self.setCloseButtonAlignment(self.__close_button_alignment)
+        self.setStayOnTop(self.__stay_on_top)
         self.setBackgroundColor(self.__background_color)
         self.setTitleColor(self.__title_color)
         self.setTextColor(self.__text_color)
@@ -165,10 +170,6 @@ class Toast(QDialog):
         self.setDurationBarColor(self.__duration_bar_color)
         self.setTitleFont(self.__title_font)
         self.setTextFont(self.__text_font)
-        self.setCloseButtonIcon(self.__close_button_icon)
-        self.setCloseButtonIconSize(self.__close_button_icon_size)
-        self.setCloseButtonSize(self.__close_button_size)
-        self.setCloseButtonAlignment(self.__close_button_alignment)
 
         # Timer for hiding the notification after set duration
         self.__duration_timer = QTimer(self)
