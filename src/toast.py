@@ -86,6 +86,7 @@ class Toast(QDialog):
 
         self.__elapsed_time = 0
         self.__fading_out = False
+        self.__used = False
 
         # Window settings
         self.setWindowFlags(Qt.Window | Qt.CustomizeWindowHint | Qt.FramelessWindowHint)
@@ -201,6 +202,11 @@ class Toast(QDialog):
                 self.__duration_bar_timer.start(Toast.__DURATION_BAR_UPDATE_INTERVAL)
 
     def show(self):
+        # Check if already used
+        if self.__used:
+            return
+        self.__used = True
+
         # Setup UI
         self.__setup_ui()
 
@@ -395,6 +401,9 @@ class Toast(QDialog):
         return x, y
 
     def __setup_ui(self):
+        # Update stylesheet
+        self.__update_stylesheet()
+
         # Calculate title and text width and height
         title_font_metrics = QFontMetrics(self.__title_font)
         title_width = title_font_metrics.width(self.__title_label.text())
@@ -710,18 +719,24 @@ class Toast(QDialog):
         return self.__duration
 
     def setDuration(self, duration: int):
+        if self.__used:
+            return
         self.__duration = duration
 
     def isShowDurationBar(self) -> bool:
         return self.__show_duration_bar
 
     def setShowDurationBar(self, on: bool):
+        if self.__used:
+            return
         self.__show_duration_bar = on
 
     def getTitle(self) -> str:
         return self.__title
 
     def setTitle(self, title: str):
+        if self.__used:
+            return
         self.__title = title
         self.__title_label.setText(title)
 
@@ -729,6 +744,8 @@ class Toast(QDialog):
         return self.__text
 
     def setText(self, text: str):
+        if self.__used:
+            return
         self.__text = text
         self.__text_label.setText(text)
 
@@ -736,6 +753,9 @@ class Toast(QDialog):
         return self.__icon
 
     def setIcon(self, icon: QPixmap | ToastIcon):
+        if self.__used:
+            return
+
         if type(icon) == ToastIcon:
             self.__icon = self.__get_icon_from_enum(icon)
         else:
@@ -748,12 +768,16 @@ class Toast(QDialog):
         return self.__show_icon
 
     def setShowIcon(self, on: bool):
+        if self.__used:
+            return
         self.__show_icon = on
 
     def getIconSize(self) -> QSize:
         return self.__icon_size
 
     def setIconSize(self, size: QSize):
+        if self.__used:
+            return
         self.__icon_size = size
         self.__icon_widget.setFixedSize(size)
         self.__icon_widget.setIconSize(size)
@@ -763,6 +787,9 @@ class Toast(QDialog):
         return self.__close_button_icon
 
     def setCloseButtonIcon(self, icon: QPixmap | ToastIcon):
+        if self.__used:
+            return
+
         if type(icon) == ToastIcon:
             self.__close_button_icon = self.__get_icon_from_enum(icon)
         else:
@@ -775,6 +802,8 @@ class Toast(QDialog):
         return self.__close_button_icon_size
 
     def setCloseButtonIconSize(self, size: QSize):
+        if self.__used:
+            return
         self.__close_button_icon_size = size
         self.__close_button.setIconSize(size)
         self.setCloseButtonIcon(self.__close_button_icon)
@@ -783,6 +812,8 @@ class Toast(QDialog):
         return self.__close_button_size
 
     def setCloseButtonSize(self, size: QSize):
+        if self.__used:
+            return
         self.__close_button_size = size
         self.__close_button.setFixedSize(size)
 
@@ -790,6 +821,8 @@ class Toast(QDialog):
         return self.__close_button_size.width()
 
     def setCloseButtonWidth(self, width: int):
+        if self.__used:
+            return
         self.__close_button_size.setWidth(width)
         self.__close_button.setFixedSize(self.__close_button_size)
 
@@ -797,6 +830,8 @@ class Toast(QDialog):
         return self.__close_button_size.height()
 
     def setCloseButtonHeight(self, height: int):
+        if self.__used:
+            return
         self.__close_button_size.setHeight(height)
         self.__close_button.setFixedSize(self.__close_button_size)
 
@@ -804,6 +839,9 @@ class Toast(QDialog):
         return self.__close_button_alignment
 
     def setCloseButtonAlignment(self, alignment: ToastButtonAlignment):
+        if self.__used:
+            return
+
         if (alignment == ToastButtonAlignment.TOP
                 or alignment == ToastButtonAlignment.MIDDLE
                 or alignment == ToastButtonAlignment.BOTTOM):
@@ -813,25 +851,34 @@ class Toast(QDialog):
         return self.__fade_in_duration
 
     def setFadeInDuration(self, duration: int):
+        if self.__used:
+            return
         self.__fade_in_duration = duration
 
     def getFadeOutDuration(self) -> int:
         return self.__fade_out_duration
 
     def setFadeOutDuration(self, duration: int):
+        if self.__used:
+            return
         self.__fade_out_duration = duration
 
     def isResetCountdownOnHover(self) -> bool:
         return self.__reset_countdown_on_hover
 
     def setResetCountdownOnHover(self, on: bool):
+        if self.__used:
+            return
         self.__reset_countdown_on_hover = on
 
     def isStayOnTop(self) -> bool:
         return self.__stay_on_top
 
     def setStayOnTop(self, on: bool):
+        if self.__used:
+            return
         self.__stay_on_top = on
+
         if on:
             self.setWindowFlags(Qt.Window |
                                 Qt.CustomizeWindowHint |
@@ -846,36 +893,42 @@ class Toast(QDialog):
         return self.__border_radius
 
     def setBorderRadius(self, border_radius: int):
+        if self.__used:
+            return
         self.__border_radius = border_radius
-        self.__update_stylesheet()
 
     def getBackgroundColor(self) -> QColor:
         return self.__background_color
 
     def setBackgroundColor(self, color: QColor):
+        if self.__used:
+            return
         self.__background_color = color
-        self.__update_stylesheet()
 
     def getTitleColor(self) -> QColor:
         return self.__title_color
 
     def setTitleColor(self, color: QColor):
+        if self.__used:
+            return
         self.__title_color = color
-        self.__update_stylesheet()
 
     def getTextColor(self) -> QColor:
         return self.__text_color
 
     def setTextColor(self, color: QColor):
+        if self.__used:
+            return
         self.__text_color = color
-        self.__update_stylesheet()
 
     def getIconColor(self) -> QColor:
         return self.__icon_color
 
     def setIconColor(self, color: QColor):
-        self.__icon_color = color
+        if self.__used:
+            return
 
+        self.__icon_color = color
         recolored_image = self.__recolor_image(self.__icon_widget.icon().pixmap(
                                                self.__icon_widget.iconSize()).toImage(),
                                                self.__icon_widget.iconSize().width(),
@@ -887,15 +940,18 @@ class Toast(QDialog):
         return self.__icon_separator_color
 
     def setIconSeparatorColor(self, color: QColor):
+        if self.__used:
+            return
         self.__icon_separator_color = color
-        self.__update_stylesheet()
 
     def getCloseButtonColor(self) -> QColor:
         return self.__close_button_icon_color
 
     def setCloseButtonIconColor(self, color: QColor):
-        self.__close_button_icon_color = color
+        if self.__used:
+            return
 
+        self.__close_button_icon_color = color
         recolored_image = self.__recolor_image(self.__close_button.icon().pixmap(
                                                self.__close_button.iconSize()).toImage(),
                                                self.__close_button.iconSize().width(),
@@ -907,13 +963,16 @@ class Toast(QDialog):
         return self.__duration_bar_color
 
     def setDurationBarColor(self, color: QColor):
+        if self.__used:
+            return
         self.__duration_bar_color = color
-        self.__update_stylesheet()
 
     def getTitleFont(self) -> QFont:
         return self.__title_font
 
     def setTitleFont(self, font: QFont):
+        if self.__used:
+            return
         self.__title_font = font
         self.__title_label.setFont(font)
 
@@ -921,6 +980,8 @@ class Toast(QDialog):
         return self.__text_font
 
     def setTextFont(self, font: QFont):
+        if self.__used:
+            return
         self.__text_font = font
         self.__text_label.setFont(font)
 
@@ -928,159 +989,214 @@ class Toast(QDialog):
         return self.__margins
 
     def setMargins(self, margins: QMargins):
+        if self.__used:
+            return
         self.__margins = margins
 
     def getMarginLeft(self) -> int:
         return self.__margins.left()
 
     def setMarginLeft(self, margin: int):
+        if self.__used:
+            return
         self.__margins.setLeft(margin)
 
     def getMarginTop(self) -> int:
         return self.__margins.top()
 
     def setMarginTop(self, margin: int):
+        if self.__used:
+            return
         self.__margins.setTop(margin)
 
     def getMarginRight(self) -> int:
         return self.__margins.right()
 
     def setMarginRight(self, margin: int):
+        if self.__used:
+            return
         self.__margins.setRight(margin)
 
     def getMarginBottom(self) -> int:
         return self.__margins.bottom()
 
     def setMarginBottom(self, margin: int):
+        if self.__used:
+            return
         self.__margins.setBottom(margin)
 
     def getIconMargins(self) -> QMargins:
         return self.__icon_margins
 
     def setIconMargins(self, margins: QMargins):
+        if self.__used:
+            return
         self.__icon_margins = margins
 
     def getIconMarginLeft(self) -> int:
         return self.__icon_margins.left()
 
     def setIconMarginLeft(self, margin: int):
+        if self.__used:
+            return
         self.__icon_margins.setLeft(margin)
 
     def getIconMarginTop(self) -> int:
         return self.__icon_margins.top()
 
     def setIconMarginTop(self, margin: int):
+        if self.__used:
+            return
         self.__icon_margins.setTop(margin)
 
     def getIconMarginRight(self) -> int:
         return self.__icon_margins.right()
 
     def setIconMarginRight(self, margin: int):
+        if self.__used:
+            return
         self.__icon_margins.setRight(margin)
 
     def getIconMarginBottom(self) -> int:
         return self.__icon_margins.bottom()
 
     def setIconMarginBottom(self, margin: int):
+        if self.__used:
+            return
         self.__icon_margins.setBottom(margin)
 
     def getIconSectionMargins(self) -> QMargins:
         return self.__icon_section_margins
 
     def setIconSectionMargins(self, margins: QMargins):
+        if self.__used:
+            return
         self.__icon_section_margins = margins
 
     def getIconSectionMarginLeft(self) -> int:
         return self.__icon_section_margins.left()
 
     def setIconSectionMarginLeft(self, margin: int):
+        if self.__used:
+            return
         self.__icon_section_margins.setLeft(margin)
 
     def getIconSectionMarginTop(self) -> int:
         return self.__icon_section_margins.top()
 
     def setIconSectionMarginTop(self, margin: int):
+        if self.__used:
+            return
         self.__icon_section_margins.setTop(margin)
 
     def getIconSectionMarginRight(self) -> int:
         return self.__icon_section_margins.right()
 
     def setIconSectionMarginRight(self, margin: int):
+        if self.__used:
+            return
         self.__icon_section_margins.setRight(margin)
 
     def getIconSectionMarginBottom(self) -> int:
         return self.__icon_section_margins.bottom()
 
     def setIconSectionMarginBottom(self, margin: int):
+        if self.__used:
+            return
         self.__icon_section_margins.setBottom(margin)
 
     def getTextSectionMargins(self) -> QMargins:
         return self.__text_section_margins
 
     def setTextSectionMargins(self, margins: QMargins):
+        if self.__used:
+            return
         self.__text_section_margins = margins
 
     def getTextSectionMarginLeft(self) -> int:
         return self.__text_section_margins.left()
 
     def setTextSectionMarginLeft(self, margin: int):
+        if self.__used:
+            return
         self.__text_section_margins.setLeft(margin)
 
     def getTextSectionMarginTop(self) -> int:
         return self.__text_section_margins.top()
 
     def setTextSectionMarginTop(self, margin: int):
+        if self.__used:
+            return
         self.__text_section_margins.setTop(margin)
 
     def getTextSectionMarginRight(self) -> int:
         return self.__text_section_margins.right()
 
     def setTextSectionMarginRight(self, margin: int):
+        if self.__used:
+            return
         self.__text_section_margins.setRight(margin)
 
     def getTextSectionMarginBottom(self) -> int:
         return self.__text_section_margins.bottom()
 
     def setTextSectionMarginBottom(self, margin: int):
+        if self.__used:
+            return
         self.__text_section_margins.setBottom(margin)
 
     def getCloseButtonMargins(self) -> QMargins:
         return self.__close_button_margins
 
     def setCloseButtonMargins(self, margins: QMargins):
+        if self.__used:
+            return
         self.__close_button_margins = margins
 
     def getCloseButtonMarginLeft(self) -> int:
         return self.__close_button_margins.left()
 
     def setCloseButtonMarginLeft(self, margin: int):
+        if self.__used:
+            return
         self.__close_button_margins.setLeft(margin)
 
     def getCloseButtonMarginTop(self) -> int:
         return self.__close_button_margins.top()
 
     def setCloseButtonMarginTop(self, margin: int):
+        if self.__used:
+            return
         self.__close_button_margins.setTop(margin)
 
     def getCloseButtonMarginRight(self) -> int:
         return self.__close_button_margins.right()
 
     def setCloseButtonMarginRight(self, margin: int):
+        if self.__used:
+            return
         self.__close_button_margins.setRight(margin)
 
     def getCloseButtonMarginBottom(self) -> int:
         return self.__close_button_margins.bottom()
 
     def setCloseButtonMarginBottom(self, margin: int):
+        if self.__used:
+            return
         self.__close_button_margins.setBottom(margin)
 
     def getTextSectionSpacing(self) -> int:
         return self.__text_section_spacing
 
     def setTextSectionSpacing(self, spacing: int):
+        if self.__used:
+            return
         self.__text_section_spacing = spacing
 
     def applyPreset(self, preset: ToastPreset):
+        if self.__used:
+            return
+
         if preset == ToastPreset.SUCCESS or preset == ToastPreset.SUCCESS_DARK:
             self.setIcon(ToastIcon.SUCCESS)
             self.setIconColor(Toast.__SUCCESS_ACCENT_COLOR)
