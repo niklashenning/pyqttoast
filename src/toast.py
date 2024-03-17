@@ -43,6 +43,10 @@ class Toast(QDialog):
     closed = Signal()
 
     def __init__(self, parent):
+        """Create a new Toast instance
+
+        :param parent: the parent widget
+        """
 
         super(Toast, self).__init__(parent)
 
@@ -89,9 +93,11 @@ class Toast(QDialog):
         self.__used = False
 
         # Window settings
-        self.setWindowFlags(Qt.Window | Qt.CustomizeWindowHint | Qt.FramelessWindowHint)
-        self.setAttribute(Qt.WA_TranslucentBackground)
-        self.setFocusPolicy(Qt.NoFocus)
+        self.setWindowFlags(Qt.WindowType.Window |
+                            Qt.WindowType.CustomizeWindowHint |
+                            Qt.WindowType.FramelessWindowHint)
+        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
+        self.setFocusPolicy(Qt.FocusPolicy.NoFocus)
 
         # Notification widget (QLabel because QWidget has weird behaviour with stylesheets)
         self.__notification = QLabel(self)
@@ -183,6 +189,12 @@ class Toast(QDialog):
         self.setStyleSheet(open(self.__get_directory() + '/css/toast_notification.css').read())
 
     def enterEvent(self, event):
+        """Event that happens every time the mouse enters this widget.
+        If reset_countdown_on_hover is enabled, reset the countdown
+
+        :param event: the event sent by PyQt
+        """
+
         # Reset timer if hovered and resetting is enabled
         if self.__duration != 0 and self.__duration_timer.isActive() and self.__reset_countdown_on_hover:
             self.__duration_timer.stop()
@@ -194,6 +206,12 @@ class Toast(QDialog):
                 self.__elapsed_time = 0
 
     def leaveEvent(self, event):
+        """Event that happens every time the mouse leaves this widget.
+        If reset_countdown_on_hover is enabled, restart the countdown
+
+        :param event: the event sent by PyQt
+        """
+
         # Start timer again when leaving notification and reset is enabled
         if self.__duration != 0 and not self.__duration_timer.isActive() and self.__reset_countdown_on_hover:
             self.__duration_timer.start(self.__duration)
@@ -203,6 +221,8 @@ class Toast(QDialog):
                 self.__duration_bar_timer.start(Toast.__DURATION_BAR_UPDATE_INTERVAL)
 
     def show(self):
+        """Show the toast notification"""
+
         # Check if already used
         if self.__used:
             return
@@ -263,6 +283,8 @@ class Toast(QDialog):
             Toast.__queue.append(self)
 
     def hide(self):
+        """Start hiding process of the toast notification"""
+
         if not self.__fading_out:
             if self.__duration != 0:
                 self.__duration_timer.stop()
@@ -270,6 +292,8 @@ class Toast(QDialog):
             self.__fade_out()
 
     def __fade_out(self):
+        """Start the fade out animation"""
+
         self.fade_out_animation = QPropertyAnimation(self.__opacity_effect, b"opacity")
         self.fade_out_animation.setDuration(self.__fade_out_duration)
         self.fade_out_animation.setStartValue(1)
@@ -278,6 +302,8 @@ class Toast(QDialog):
         self.fade_out_animation.start()
 
     def __hide(self):
+        """Hide the toast notification"""
+
         self.close()
 
         if self in Toast.__currently_shown:
@@ -294,20 +320,26 @@ class Toast(QDialog):
 
             # Show next item from queue after updating
             timer = QTimer(self)
-            timer.timeout.connect(self.__handle_queue)
+            timer.timeout.connect(self.__show_next_in_queue)
             timer.start(self.__fade_in_duration)
 
     def __update_duration_bar(self):
+        """Update the duration bar chunk with the elapsed time"""
+
         self.__elapsed_time += Toast.__DURATION_BAR_UPDATE_INTERVAL
 
         if self.__elapsed_time >= self.__duration:
             self.__duration_bar_timer.stop()
             return
 
-        new_chunk_width = int(self.width() - self.__elapsed_time / self.__duration * self.width())
+        new_chunk_width = math.floor(self.__duration_bar_container.width()
+                                     - self.__elapsed_time / self.__duration
+                                     * self.__duration_bar_container.width())
         self.__duration_bar_chunk.setFixedWidth(new_chunk_width)
 
     def __update_position_xy(self):
+        """Update the x and y position of the toast with an animation"""
+
         x, y = self.__calculate_position()
 
         # Animate position change
@@ -317,6 +349,8 @@ class Toast(QDialog):
         self.pos_animation.start()
 
     def __update_position_y(self):
+        """Update the y position of the toast with an animation"""
+
         x, y = self.__calculate_position()
 
         # Animate position change
@@ -325,12 +359,19 @@ class Toast(QDialog):
         self.pos_animation.setDuration(self.__fade_out_duration)
         self.pos_animation.start()
 
-    def __handle_queue(self):
+    def __show_next_in_queue(self):
+        """Show next toast in queue"""
+
         if len(Toast.__queue) > 0:
             n = Toast.__queue.pop()
             n.show()
 
     def __calculate_position(self):
+        """Calculate x and y position of the toast
+
+        :return: x and y position
+        """
+
         # Calculate vertical space taken up by all the currently showing notifications
         y_offset = 0
         for n in Toast.__currently_shown:
@@ -402,6 +443,8 @@ class Toast(QDialog):
         return x, y
 
     def __setup_ui(self):
+        """Calculate best toast size and place and move everything correctly"""
+
         # Update stylesheet
         self.__update_stylesheet()
 
@@ -485,19 +528,19 @@ class Toast(QDialog):
 
             # Calculate height with initial label width
             title_width = (self.__title_label.fontMetrics().boundingRect(
-                QRect(0, 0, 0, 0), Qt.TextWordWrap, self.__title_label.text()).width())
+                QRect(0, 0, 0, 0), Qt.TextFlag.TextWordWrap, self.__title_label.text()).width())
             text_width = (self.__text_label.fontMetrics().boundingRect(
-                QRect(0, 0, 0, 0), Qt.TextWordWrap, self.__text_label.text()).width())
+                QRect(0, 0, 0, 0), Qt.TextFlag.TextWordWrap, self.__text_label.text()).width())
             temp_width = max(title_width, text_width)
 
             title_width = (self.__title_label.fontMetrics().boundingRect(
-                QRect(0, 0, temp_width, 0), Qt.TextWordWrap, self.__title_label.text()).width())
+                QRect(0, 0, temp_width, 0), Qt.TextFlag.TextWordWrap, self.__title_label.text()).width())
             title_height = (self.__title_label.fontMetrics().boundingRect(
-                QRect(0, 0, temp_width, 0), Qt.TextWordWrap, self.__title_label.text()).height())
+                QRect(0, 0, temp_width, 0), Qt.TextFlag.TextWordWrap, self.__title_label.text()).height())
             text_width = (self.__text_label.fontMetrics().boundingRect(
-                QRect(0, 0, temp_width, 0), Qt.TextWordWrap, self.__text_label.text()).width())
+                QRect(0, 0, temp_width, 0), Qt.TextFlag.TextWordWrap, self.__text_label.text()).width())
             text_height = (self.__text_label.fontMetrics().boundingRect(
-                QRect(0, 0, temp_width, 0), Qt.TextWordWrap, self.__text_label.text()).height())
+                QRect(0, 0, temp_width, 0), Qt.TextFlag.TextWordWrap, self.__text_label.text()).height())
 
             text_section_height = (self.__text_section_margins.top()
                                    + title_height + self.__text_section_spacing
@@ -510,13 +553,13 @@ class Toast(QDialog):
             while temp_width <= width:
                 # Recalculate height with different text widths to find optimal value
                 temp_title_width = (self.__title_label.fontMetrics().boundingRect(
-                    QRect(0, 0, temp_width, 0), Qt.TextWordWrap, self.__title_label.text()).width())
+                    QRect(0, 0, temp_width, 0), Qt.TextFlag.TextWordWrap, self.__title_label.text()).width())
                 temp_title_height = (self.__title_label.fontMetrics().boundingRect(
-                    QRect(0, 0, temp_width, 0), Qt.TextWordWrap, self.__title_label.text()).height())
+                    QRect(0, 0, temp_width, 0), Qt.TextFlag.TextWordWrap, self.__title_label.text()).height())
                 temp_text_width = (self.__text_label.fontMetrics().boundingRect(
-                    QRect(0, 0, temp_width, 0), Qt.TextWordWrap, self.__text_label.text()).width())
+                    QRect(0, 0, temp_width, 0), Qt.TextFlag.TextWordWrap, self.__text_label.text()).width())
                 temp_text_height = (self.__text_label.fontMetrics().boundingRect(
-                    QRect(0, 0, temp_width, 0), Qt.TextWordWrap, self.__text_label.text()).height())
+                    QRect(0, 0, temp_width, 0), Qt.TextFlag.TextWordWrap, self.__text_label.text()).height())
 
                 temp_text_section_height = (self.__text_section_margins.top()
                                             + temp_title_height + self.__text_section_spacing
@@ -717,43 +760,93 @@ class Toast(QDialog):
             self.__duration_bar_container.setVisible(False)
 
     def getDuration(self) -> int:
+        """Get the duration of the toast
+
+        :return: duration in milliseconds
+        """
+
         return self.__duration
 
     def setDuration(self, duration: int):
+        """Set the duration of the toast
+
+        :param duration: duration in milliseconds
+        """
+
         if self.__used:
             return
         self.__duration = duration
 
     def isShowDurationBar(self) -> bool:
+        """Get whether the duration bar is enabled
+
+        :return: whether the duration bar is enabled
+        """
+
         return self.__show_duration_bar
 
     def setShowDurationBar(self, on: bool):
+        """Set whether the duration bar should be shown
+
+        :param on: whether the duration bar should be shown
+        """
+
         if self.__used:
             return
         self.__show_duration_bar = on
 
     def getTitle(self) -> str:
+        """Get the title of the toast
+
+        :return: title
+        """
+
         return self.__title
 
     def setTitle(self, title: str):
+        """Set the title of the toast
+
+        :param title: new title
+        """
+
         if self.__used:
             return
         self.__title = title
         self.__title_label.setText(title)
 
     def getText(self) -> str:
+        """Get the text of the toast
+
+        :return: text
+        """
+
         return self.__text
 
     def setText(self, text: str):
+        """Set the text of the toast
+
+        :param text: new text
+        """
+
         if self.__used:
             return
         self.__text = text
         self.__text_label.setText(text)
 
     def getIcon(self) -> QPixmap:
+        """Get the icon of the toast
+
+        :return: icon
+        """
+
         return self.__icon
 
     def setIcon(self, icon: QPixmap | ToastIcon):
+        """Set the icon of the toast
+
+        :param icon: new icon
+        """
+
         if self.__used:
             return
 
@@ -766,17 +859,37 @@ class Toast(QDialog):
         self.setIconColor(self.__icon_color)
 
     def isShowIcon(self) -> bool:
+        """Get whether the icon is enabled
+
+        :return: whether the icon is enabled
+        """
+
         return self.__show_icon
 
     def setShowIcon(self, on: bool):
+        """Get whether the icon should be shown
+
+        :param on: whether the icon should be shown
+        """
+
         if self.__used:
             return
         self.__show_icon = on
 
     def getIconSize(self) -> QSize:
+        """Get the size of the icon
+
+        :return: size
+        """
+
         return self.__icon_size
 
     def setIconSize(self, size: QSize):
+        """Set the size of the icon
+
+        :param size: new size
+        """
+
         if self.__used:
             return
         self.__icon_size = size
@@ -785,9 +898,19 @@ class Toast(QDialog):
         self.setIcon(self.__icon)
 
     def getCloseButtonIcon(self) -> QPixmap:
+        """Get the icon of the close button
+
+        :return: icon
+        """
+
         return self.__close_button_icon
 
     def setCloseButtonIcon(self, icon: QPixmap | ToastIcon):
+        """Set the icon of the close button
+
+        :param icon: new icon
+        """
+
         if self.__used:
             return
 
@@ -800,9 +923,19 @@ class Toast(QDialog):
         self.setCloseButtonIconColor(self.__close_button_icon_color)
 
     def getCloseButtonIconSize(self) -> QSize:
+        """Get the size of the close button icon
+
+        :return: size
+        """
+
         return self.__close_button_icon_size
 
     def setCloseButtonIconSize(self, size: QSize):
+        """Get the size of the close button icon
+
+        :param size: new size
+        """
+
         if self.__used:
             return
         self.__close_button_icon_size = size
@@ -810,36 +943,76 @@ class Toast(QDialog):
         self.setCloseButtonIcon(self.__close_button_icon)
 
     def getCloseButtonSize(self) -> QSize:
+        """Get the size of the close button
+
+        :return: size
+        """
+
         return self.__close_button_size
 
     def setCloseButtonSize(self, size: QSize):
+        """Set the size of the close button
+
+        :param size: new size
+        """
+
         if self.__used:
             return
         self.__close_button_size = size
         self.__close_button.setFixedSize(size)
 
     def getCloseButtonWidth(self) -> int:
+        """Get the width of the close button
+
+        :return: width
+        """
+
         return self.__close_button_size.width()
 
     def setCloseButtonWidth(self, width: int):
+        """Set the width of the close button
+
+        :param width: new width
+        """
+
         if self.__used:
             return
         self.__close_button_size.setWidth(width)
         self.__close_button.setFixedSize(self.__close_button_size)
 
     def getCloseButtonHeight(self) -> int:
+        """Get the height of the close button
+
+        :return: height
+        """
+
         return self.__close_button_size.height()
 
     def setCloseButtonHeight(self, height: int):
+        """Set the height of the close button
+
+        :param height: new height
+        """
+
         if self.__used:
             return
         self.__close_button_size.setHeight(height)
         self.__close_button.setFixedSize(self.__close_button_size)
 
     def getCloseButtonAlignment(self) -> ToastButtonAlignment:
+        """Get the alignment of the close button
+
+        :return: alignment
+        """
+
         return self.__close_button_alignment
 
     def setCloseButtonAlignment(self, alignment: ToastButtonAlignment):
+        """Set the alignment of the close button
+
+        :param alignment: new alignment
+        """
+
         if self.__used:
             return
 
@@ -849,83 +1022,173 @@ class Toast(QDialog):
             self.__close_button_alignment = alignment
 
     def getFadeInDuration(self) -> int:
+        """Get the fade in duration of the toast
+
+        :return: fade in duration
+        """
+
         return self.__fade_in_duration
 
     def setFadeInDuration(self, duration: int):
+        """Set the fade in duration of the toast
+
+        :param duration: new fade in duration
+        """
+
         if self.__used:
             return
         self.__fade_in_duration = duration
 
     def getFadeOutDuration(self) -> int:
+        """Get the fade out duration of the toast
+
+        :return: fade out duration
+        """
+
         return self.__fade_out_duration
 
     def setFadeOutDuration(self, duration: int):
+        """Set the fade out duration of the toast
+
+        :param duration: new fade out duration
+        """
+
         if self.__used:
             return
         self.__fade_out_duration = duration
 
     def isResetCountdownOnHover(self) -> bool:
+        """Get whether the countdown resets on hover
+
+        :return: whether the countdown resets on hover
+        """
+
         return self.__reset_countdown_on_hover
 
     def setResetCountdownOnHover(self, on: bool):
+        """Set whether the countdown should reset on hover
+
+        :param on: whether the countdown should reset on hover
+        """
+
         if self.__used:
             return
         self.__reset_countdown_on_hover = on
 
     def isStayOnTop(self) -> bool:
+        """Get whether the toast always stays on top of other windows
+
+        :return: whether the stay on top option is enabled
+        """
+
         return self.__stay_on_top
 
     def setStayOnTop(self, on: bool):
+        """Set whether the toast should always stay on top of other windows
+
+        :param on: whether the stay on top option should be enabled
+        """
+
         if self.__used:
             return
         self.__stay_on_top = on
 
         if on:
-            self.setWindowFlags(Qt.Window |
-                                Qt.CustomizeWindowHint |
-                                Qt.FramelessWindowHint |
-                                Qt.WindowStaysOnTopHint)
+            self.setWindowFlags(Qt.WindowType.Window |
+                                Qt.WindowType.CustomizeWindowHint |
+                                Qt.WindowType.FramelessWindowHint |
+                                Qt.WindowType.WindowStaysOnTopHint)
         else:
-            self.setWindowFlags(Qt.Window |
-                                Qt.CustomizeWindowHint |
-                                Qt.FramelessWindowHint)
+            self.setWindowFlags(Qt.WindowType.Window |
+                                Qt.WindowType.CustomizeWindowHint |
+                                Qt.WindowType.FramelessWindowHint)
 
     def getBorderRadius(self) -> int:
+        """Get the border radius of the toast
+
+        :return: border radius
+        """
+
         return self.__border_radius
 
     def setBorderRadius(self, border_radius: int):
+        """Set the border radius of the toast
+
+        :param border_radius: new border radius
+        """
+
         if self.__used:
             return
         self.__border_radius = border_radius
 
     def getBackgroundColor(self) -> QColor:
+        """Get the background color of the toast
+
+        :return: background color
+        """
+
         return self.__background_color
 
     def setBackgroundColor(self, color: QColor):
+        """Set the background color of the toast
+
+        :param color: new background color
+        """
+
         if self.__used:
             return
         self.__background_color = color
 
     def getTitleColor(self) -> QColor:
+        """Get the color of the title
+
+        :return: title color
+        """
+
         return self.__title_color
 
     def setTitleColor(self, color: QColor):
+        """Set the color of the title
+
+        :param color: new title color
+        """
+
         if self.__used:
             return
         self.__title_color = color
 
     def getTextColor(self) -> QColor:
+        """Get the color of the text
+
+        :return: text color
+        """
+
         return self.__text_color
 
     def setTextColor(self, color: QColor):
+        """Set the color of the text
+
+        :param color: new text color
+        """
+
         if self.__used:
             return
         self.__text_color = color
 
     def getIconColor(self) -> QColor:
+        """Get the color of the icon
+
+        :return: icon color
+        """
+
         return self.__icon_color
 
     def setIconColor(self, color: QColor):
+        """Set the color of the icon
+
+        :param color: new icon color
+        """
+
         if self.__used:
             return
 
@@ -938,17 +1201,37 @@ class Toast(QDialog):
         self.__icon_widget.setIcon(QIcon(QPixmap(recolored_image)))
 
     def getIconSeparatorColor(self) -> QColor:
+        """Get the color of the icon separator
+
+        :return: new color
+        """
+
         return self.__icon_separator_color
 
     def setIconSeparatorColor(self, color: QColor):
+        """Set the color of the icon separator
+
+        :param color: new color
+        """
+
         if self.__used:
             return
         self.__icon_separator_color = color
 
-    def getCloseButtonColor(self) -> QColor:
+    def getCloseButtonIconColor(self) -> QColor:
+        """Get the color of the close button icon
+
+        :return: color
+        """
+
         return self.__close_button_icon_color
 
     def setCloseButtonIconColor(self, color: QColor):
+        """Set the color of the close button icon
+
+        :param color: new color
+        """
+
         if self.__used:
             return
 
@@ -961,240 +1244,535 @@ class Toast(QDialog):
         self.__close_button.setIcon(QIcon(QPixmap(recolored_image)))
 
     def getDurationBarColor(self) -> QColor:
+        """Get the color of the duration bar
+
+        :return: color
+        """
+
         return self.__duration_bar_color
 
     def setDurationBarColor(self, color: QColor):
+        """Set the color of the duration bar
+
+        :param color: new color
+        """
+
         if self.__used:
             return
         self.__duration_bar_color = color
 
     def getTitleFont(self) -> QFont:
+        """Get the font of the title
+
+        :return: title font
+        """
+
         return self.__title_font
 
     def setTitleFont(self, font: QFont):
+        """Set the font of the title
+
+        :param font: new title font
+        """
+
         if self.__used:
             return
         self.__title_font = font
         self.__title_label.setFont(font)
 
     def getTextFont(self) -> QFont:
+        """Get the font of the text
+
+        :return: text font
+        """
+
         return self.__text_font
 
     def setTextFont(self, font: QFont):
+        """Set the font of the text
+
+        :param font: new text font
+        """
+
         if self.__used:
             return
         self.__text_font = font
         self.__text_label.setFont(font)
 
     def getMargins(self) -> QMargins:
+        """Get the margins of the toast content
+
+        :return: margins
+        """
+
         return self.__margins
 
     def setMargins(self, margins: QMargins):
+        """Set the margins of the toast content
+
+        :param margins: new margins
+        """
+
         if self.__used:
             return
         self.__margins = margins
 
     def getMarginLeft(self) -> int:
+        """Get the left margin of the toast content
+
+        :return: left margin
+        """
+
         return self.__margins.left()
 
     def setMarginLeft(self, margin: int):
+        """Set the left margin of the toast content
+
+        :param margin: new left margin
+        """
+
         if self.__used:
             return
         self.__margins.setLeft(margin)
 
     def getMarginTop(self) -> int:
+        """Get the top margin of the toast content
+
+        :return: top margin
+        """
+
         return self.__margins.top()
 
     def setMarginTop(self, margin: int):
+        """Set the top margin of the toast content
+
+        :param margin: new top margin
+        """
+
         if self.__used:
             return
         self.__margins.setTop(margin)
 
     def getMarginRight(self) -> int:
+        """Get the right margin of the toast content
+
+        :return: right margin
+        """
+
         return self.__margins.right()
 
     def setMarginRight(self, margin: int):
+        """Set the right margin of the toast content
+
+        :param margin: new right margin
+        """
+
         if self.__used:
             return
         self.__margins.setRight(margin)
 
     def getMarginBottom(self) -> int:
+        """Get the bottom margin of the toast content
+
+        :return: bottom margin
+        """
+
         return self.__margins.bottom()
 
     def setMarginBottom(self, margin: int):
+        """Set the bottom margin of the toast content
+
+        :param margin: new bottom margin
+        """
+
         if self.__used:
             return
         self.__margins.setBottom(margin)
 
     def getIconMargins(self) -> QMargins:
+        """Get the margins of the icon
+
+        :return: margins
+        """
+
         return self.__icon_margins
 
     def setIconMargins(self, margins: QMargins):
+        """Set the margins of the icon
+
+        :param margins: new margins
+        """
+
         if self.__used:
             return
         self.__icon_margins = margins
 
     def getIconMarginLeft(self) -> int:
+        """Get the left margin of the icon
+
+        :return: left margin
+        """
+
         return self.__icon_margins.left()
 
     def setIconMarginLeft(self, margin: int):
+        """Set the left margin of the icon
+
+        :param margin: new left margin
+        """
+
         if self.__used:
             return
         self.__icon_margins.setLeft(margin)
 
     def getIconMarginTop(self) -> int:
+        """Get the top margin of the icon
+
+        :return: top margin
+        """
+
         return self.__icon_margins.top()
 
     def setIconMarginTop(self, margin: int):
+        """Set the top margin of the icon
+
+        :param margin: new top margin
+        """
+
         if self.__used:
             return
         self.__icon_margins.setTop(margin)
 
     def getIconMarginRight(self) -> int:
+        """Get the right margin of the icon
+
+        :return: right margin
+        """
+
         return self.__icon_margins.right()
 
     def setIconMarginRight(self, margin: int):
+        """Set the right margin of the icon
+
+        :param margin: new right margin
+        """
+
         if self.__used:
             return
         self.__icon_margins.setRight(margin)
 
     def getIconMarginBottom(self) -> int:
+        """Get the bottom margin of the icon
+
+        :return: bottom margin
+        """
+
         return self.__icon_margins.bottom()
 
     def setIconMarginBottom(self, margin: int):
+        """Set the bottom margin of the icon
+
+        :param margin: new bottom margin
+        """
+
         if self.__used:
             return
         self.__icon_margins.setBottom(margin)
 
     def getIconSectionMargins(self) -> QMargins:
+        """Get the margins of the icon section
+
+        :return: margins
+        """
+
         return self.__icon_section_margins
 
     def setIconSectionMargins(self, margins: QMargins):
+        """Set the margins of the icon section
+
+        :param margins: new margins
+        """
+
         if self.__used:
             return
         self.__icon_section_margins = margins
 
     def getIconSectionMarginLeft(self) -> int:
+        """Get the left margin of the icon section
+
+        :return: left margin
+        """
+
         return self.__icon_section_margins.left()
 
     def setIconSectionMarginLeft(self, margin: int):
+        """Set the left margin of the icon section
+
+        :param margin: new left margin
+        """
+
         if self.__used:
             return
         self.__icon_section_margins.setLeft(margin)
 
     def getIconSectionMarginTop(self) -> int:
+        """Get the top margin of the icon section
+
+        :return: top margin
+        """
+
         return self.__icon_section_margins.top()
 
     def setIconSectionMarginTop(self, margin: int):
+        """Set the top margin of the icon section
+
+        :param margin: new top margin
+        """
+
         if self.__used:
             return
         self.__icon_section_margins.setTop(margin)
 
     def getIconSectionMarginRight(self) -> int:
+        """Get the right margin of the icon section
+
+        :return: right margin
+        """
+
         return self.__icon_section_margins.right()
 
     def setIconSectionMarginRight(self, margin: int):
+        """Set the right margin of the icon section
+
+        :param margin: new right margin
+        """
+
         if self.__used:
             return
         self.__icon_section_margins.setRight(margin)
 
     def getIconSectionMarginBottom(self) -> int:
+        """Get the bottom margin of the icon section
+
+        :return: bottom margin
+        """
+
         return self.__icon_section_margins.bottom()
 
     def setIconSectionMarginBottom(self, margin: int):
+        """Set the bottom margin of the icon section
+
+        :param margin: new bottom margin
+        """
+
         if self.__used:
             return
         self.__icon_section_margins.setBottom(margin)
 
     def getTextSectionMargins(self) -> QMargins:
+        """Get the margins of the text section
+
+        :return: margins
+        """
+
         return self.__text_section_margins
 
     def setTextSectionMargins(self, margins: QMargins):
+        """Set the margins of the text section
+
+        :param margins: new margins
+        """
+
         if self.__used:
             return
         self.__text_section_margins = margins
 
     def getTextSectionMarginLeft(self) -> int:
+        """Get the left margin of the text section
+
+        :return: left margin
+        """
+
         return self.__text_section_margins.left()
 
     def setTextSectionMarginLeft(self, margin: int):
+        """Set the left margin of the text section
+
+        :param margin: new left margin
+        """
+
         if self.__used:
             return
         self.__text_section_margins.setLeft(margin)
 
     def getTextSectionMarginTop(self) -> int:
+        """Get the top margin of the text section
+
+        :return: top margin
+        """
+
         return self.__text_section_margins.top()
 
     def setTextSectionMarginTop(self, margin: int):
+        """Set the top margin of the text section
+
+        :param margin: new top margin
+        """
+
         if self.__used:
             return
         self.__text_section_margins.setTop(margin)
 
     def getTextSectionMarginRight(self) -> int:
+        """Get the right margin of the text section
+
+        :return: right margin
+        """
+
         return self.__text_section_margins.right()
 
     def setTextSectionMarginRight(self, margin: int):
+        """Set the right margin of the text section
+
+        :param margin: new right margin
+        """
+
         if self.__used:
             return
         self.__text_section_margins.setRight(margin)
 
     def getTextSectionMarginBottom(self) -> int:
+        """Get the bottom margin of the text section
+
+        :return: bottom margin
+        """
+
         return self.__text_section_margins.bottom()
 
     def setTextSectionMarginBottom(self, margin: int):
+        """Set the bottom margin of the text section
+
+        :param margin: new bottom margin
+        """
+
         if self.__used:
             return
         self.__text_section_margins.setBottom(margin)
 
     def getCloseButtonMargins(self) -> QMargins:
+        """Get the margins of the close button
+
+        :return: margins
+        """
+
         return self.__close_button_margins
 
     def setCloseButtonMargins(self, margins: QMargins):
+        """Set the margins of the close button
+
+        :param margins: new margins
+        """
+
         if self.__used:
             return
         self.__close_button_margins = margins
 
     def getCloseButtonMarginLeft(self) -> int:
+        """Get the left margin of the close button
+
+        :return: left margin
+        """
+
         return self.__close_button_margins.left()
 
     def setCloseButtonMarginLeft(self, margin: int):
+        """Set the left margin of the close button
+
+        :param margin: new left margin
+        """
+
         if self.__used:
             return
         self.__close_button_margins.setLeft(margin)
 
     def getCloseButtonMarginTop(self) -> int:
+        """Get the top margin of the close button
+
+        :return: top margin
+        """
+
         return self.__close_button_margins.top()
 
     def setCloseButtonMarginTop(self, margin: int):
+        """Set the top margin of the close button
+
+        :param margin: new top margin
+        """
+
         if self.__used:
             return
         self.__close_button_margins.setTop(margin)
 
     def getCloseButtonMarginRight(self) -> int:
+        """Get the right margin of the close button
+
+        :return: right margin
+        """
+
         return self.__close_button_margins.right()
 
     def setCloseButtonMarginRight(self, margin: int):
+        """Set the right margin of the close button
+
+        :param margin: new right margin
+        """
+
         if self.__used:
             return
         self.__close_button_margins.setRight(margin)
 
     def getCloseButtonMarginBottom(self) -> int:
+        """Get the bottom margin of the close button
+
+        :return: bottom margin
+        """
+
         return self.__close_button_margins.bottom()
 
     def setCloseButtonMarginBottom(self, margin: int):
+        """Set the bottom margin of the close button
+
+        :param margin: new bottom margin
+        """
+
         if self.__used:
             return
         self.__close_button_margins.setBottom(margin)
 
     def getTextSectionSpacing(self) -> int:
+        """Get the spacing between the title and the text
+
+        :return: spacing
+        """
+
         return self.__text_section_spacing
 
     def setTextSectionSpacing(self, spacing: int):
+        """Set the spacing between the title and the text
+
+        :param spacing: new spacing
+        """
+
         if self.__used:
             return
         self.__text_section_spacing = spacing
 
     def applyPreset(self, preset: ToastPreset):
+        """Apply a style preset to the toast
+
+        :param preset: style preset
+        """
+
         if self.__used:
             return
 
@@ -1243,6 +1821,8 @@ class Toast(QDialog):
             self.setTextColor(Toast.__DEFAULT_TEXT_COLOR_DARK)
 
     def __update_stylesheet(self):
+        """Update the stylesheet of the toast"""
+
         self.__notification.setStyleSheet('background: {};'
                                           'border-radius: {}px;'
                                           .format(self.__background_color.name(),
@@ -1272,6 +1852,15 @@ class Toast(QDialog):
 
     @staticmethod
     def __recolor_image(image: QImage, width: int, height: int, color: QColor):
+        """Take an image and return a copy with the colors changed
+
+        :param image: image to recolor
+        :param width: width of the image
+        :param height: height of the image
+        :param color: new color
+        :return: recolored image
+        """
+
         # Loop through every pixel
         for x in range(0, width):
             for y in range(0, height):
@@ -1288,10 +1877,21 @@ class Toast(QDialog):
 
     @staticmethod
     def __get_directory():
+        """Get the current directory path
+
+        :return: directory path
+        """
+
         return os.path.dirname(os.path.realpath(__file__))
 
     @staticmethod
     def __get_icon_from_enum(enum_icon: ToastIcon):
+        """Get a QPixmap from a ToastIcon
+
+        :param enum_icon: ToastIcon
+        :return: pixmap of the ToastIcon
+        """
+
         if enum_icon == ToastIcon.SUCCESS:
             return QPixmap(Toast.__get_directory() + '/icons/success.png')
         elif enum_icon == ToastIcon.WARNING:
@@ -1307,59 +1907,132 @@ class Toast(QDialog):
 
     @staticmethod
     def getMaximumOnScreen():
+        """Get the maximum amount of toasts allowed
+        to be shown at the same time
+
+        :return: maximum toast amount
+        """
+
         return Toast.__maximum_on_screen
 
     @staticmethod
     def setMaximumOnScreen(maximum_on_screen: int):
+        """Set the maximum amount of toasts allowed
+        to be shown at the same time
+
+        :param maximum_on_screen: new maximum toast amount
+        """
+
         Toast.__maximum_on_screen = maximum_on_screen
 
     @staticmethod
-    def getSpacing():
+    def getSpacing() -> int:
+        """Get the spacing between toast notifications
+
+        :return: spacing
+        """
+
         return Toast.__spacing
 
     @staticmethod
     def setSpacing(spacing: int):
+        """Set the spacing between toast notifications
+
+        :param spacing: new spacing
+        """
+
         Toast.__spacing = spacing
 
     @staticmethod
     def getOffsetX() -> int:
+        """Get the offset for the toasts on the x-axis
+
+        :return: x-axis offset
+        """
+
         return Toast.__offset_x
 
     @staticmethod
     def setOffsetX(offset_x: int):
+        """Set the offset for the toasts on the x-axis
+
+        :param offset_x: new x-axis offset
+        """
+
         Toast.__offset_x = offset_x
 
     @staticmethod
     def getOffsetY() -> int:
+        """Get the offset for the toasts on the y-axis
+
+        :return: y-axis offset
+        """
+
         return Toast.__offset_y
 
     @staticmethod
     def setOffsetY(offset_y: int):
+        """Set the offset for the toasts on the y-axis
+
+        :param offset_y: new y-axis offset
+        """
+
         Toast.__offset_y = offset_y
 
     @staticmethod
     def getOffset() -> tuple[int, int]:
+        """Get the offset for the toasts on the x and y-axis
+
+        :return: x and y-axis offset
+        """
+
         return Toast.__offset_x, Toast.__offset_y
 
     @staticmethod
     def setOffset(offset_x: int, offset_y: int):
+        """Set the offset for the toasts on the x and y-axis
+
+        :param offset_x: new x-axis offset
+        :param offset_y: new y-axis offset
+        """
+
         Toast.__offset_x = offset_x
         Toast.__offset_y = offset_y
 
     @staticmethod
     def isAlwaysOnMainScreen() -> bool:
+        """Get whether the toasts are always being shown on the main screen
+
+        :return: whether the always on main screen option is enabled
+        """
+
         return Toast.__always_on_main_screen
 
     @staticmethod
     def setAlwaysOnMainScreen(on: bool):
+        """Set whether the toasts should always be shown on the main screen
+
+        :param on: whether the always on main screen option should be enabled
+        """
+
         Toast.__always_on_main_screen = on
 
     @staticmethod
     def getPosition() -> ToastPosition:
+        """Get the position where the toasts are shown
+
+        :return: position
+        """
+
         return Toast.__position
 
     @staticmethod
-    def setPosition(position: int):
+    def setPosition(position: ToastPosition):
+        """Set the position where the toasts are shown
+
+        :param position: new position
+        """
+
         if (position == ToastPosition.BOTTOM_RIGHT
                 or position == ToastPosition.BOTTOM_LEFT
                 or position == ToastPosition.BOTTOM_MIDDLE
@@ -1370,12 +2043,28 @@ class Toast(QDialog):
 
     @staticmethod
     def getCount() -> int:
+        """Get the amount of toasts that are either currently visible
+        or queued to be shown
+
+        :return: the amount of visible and queued toasts
+        """
+
         return len(Toast.__currently_shown) + len(Toast.__queue)
 
     @staticmethod
     def getVisibleCount() -> int:
+        """Get the amount of toasts that are currently visible
+
+        :return: the amount of visible toasts
+        """
+
         return len(Toast.__currently_shown)
 
     @staticmethod
-    def getQueueCount() -> int:
+    def getQueuedCount() -> int:
+        """Get the amount of toasts in the queue to be shown
+
+        :return: the amount of toasts in the queue
+        """
+
         return len(Toast.__queue)
