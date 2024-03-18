@@ -86,7 +86,7 @@ class Toast(QDialog):
         self.__icon_section_margins = QMargins(0, 0, 15, 0)
         self.__text_section_margins = QMargins(0, 0, 15, 0)
         self.__close_button_margins = QMargins(0, -8, 0, -8)
-        self.__text_section_spacing = 10
+        self.__text_section_spacing = 8
 
         self.__elapsed_time = 0
         self.__fading_out = False
@@ -451,7 +451,7 @@ class Toast(QDialog):
         # Calculate title and text width and height
         title_font_metrics = QFontMetrics(self.__title_font)
         title_width = title_font_metrics.width(self.__title_label.text())
-        title_height = title_font_metrics.tightBoundingRect(self.__title_label.text()).height()
+        title_height = title_font_metrics.boundingRect(self.__title_label.text()).height()
         text_font_metrics = QFontMetrics(self.__text_font)
         text_width = text_font_metrics.width(self.__text_label.text())
         text_height = text_font_metrics.boundingRect(self.__text_label.text()).height()
