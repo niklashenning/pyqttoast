@@ -228,12 +228,12 @@ class Toast(QDialog):
             return
         self.__used = True
 
-        # Setup UI
-        self.__setup_ui()
-
         # If max notifications on screen not reached, show notification
         if Toast.__maximum_on_screen > len(Toast.__currently_shown):
             Toast.__currently_shown.append(self)
+
+            # Setup UI
+            self.__setup_ui()
 
             # Start duration timer
             if self.__duration != 0:
@@ -281,6 +281,7 @@ class Toast(QDialog):
         else:
             # Add notification to queue instead
             Toast.__queue.append(self)
+            self.__used = False
 
     def hide(self):
         """Start hiding process of the toast notification"""
@@ -455,9 +456,12 @@ class Toast(QDialog):
         text_font_metrics = QFontMetrics(self.__text_font)
         text_width = text_font_metrics.width(self.__text_label.text())
         text_height = text_font_metrics.boundingRect(self.__text_label.text()).height()
+        text_section_spacing = self.__text_section_spacing
+        if self.__title == '' or self.__text == '':
+            text_section_spacing = 0
 
         text_section_height = (self.__text_section_margins.top()
-                               + title_height + self.__text_section_spacing
+                               + title_height + text_section_spacing
                                + text_height + self.__text_section_margins.bottom())
 
         # Calculate duration bar height
@@ -497,23 +501,32 @@ class Toast(QDialog):
         # Handle width greater than maximum width
         if width > self.maximumWidth():
             # Enable line break for title and text and recalculate size
-            title_width = text_width = title_width - (width - self.maximumWidth())
+
+            new_title_width = title_width - (width - self.maximumWidth())
+            if new_title_width > 0:
+                title_width = new_title_width
+
+            new_text_width = text_width - (width - self.maximumWidth())
+            if new_text_width > 0:
+                text_width = new_text_width
 
             self.__title_label.setMinimumWidth(title_width)
             self.__title_label.setWordWrap(True)
-            title_height = self.__title_label.sizeHint().height()
-            self.__title_label.resize(title_width, title_height)
+            if self.__title != '':
+                title_height = self.__title_label.sizeHint().height()
+            self.__title_label.setFixedSize(title_width, title_height)
 
             self.__text_label.setMinimumWidth(text_width)
             self.__text_label.setWordWrap(True)
-            text_height = self.__text_label.sizeHint().height()
-            self.__text_label.resize(text_width, text_height)
+            if self.__text != '':
+                text_height = self.__text_label.sizeHint().height()
+            self.__text_label.setFixedSize(text_width, text_height)
 
             # Recalculate width and height
             width = self.maximumWidth()
 
             text_section_height = (self.__text_section_margins.top()
-                                   + title_height + self.__text_section_spacing
+                                   + title_height + text_section_spacing
                                    + text_height + self.__text_section_margins.bottom())
 
             height = (self.__margins.top()
@@ -535,15 +548,18 @@ class Toast(QDialog):
 
             title_width = (self.__title_label.fontMetrics().boundingRect(
                 QRect(0, 0, temp_width, 0), Qt.TextFlag.TextWordWrap, self.__title_label.text()).width())
-            title_height = (self.__title_label.fontMetrics().boundingRect(
-                QRect(0, 0, temp_width, 0), Qt.TextFlag.TextWordWrap, self.__title_label.text()).height())
+            if self.__title != '':
+                title_height = (self.__title_label.fontMetrics().boundingRect(
+                    QRect(0, 0, temp_width, 0), Qt.TextFlag.TextWordWrap, self.__title_label.text()).height())
+
             text_width = (self.__text_label.fontMetrics().boundingRect(
                 QRect(0, 0, temp_width, 0), Qt.TextFlag.TextWordWrap, self.__text_label.text()).width())
-            text_height = (self.__text_label.fontMetrics().boundingRect(
-                QRect(0, 0, temp_width, 0), Qt.TextFlag.TextWordWrap, self.__text_label.text()).height())
+            if self.__text != '':
+                text_height = (self.__text_label.fontMetrics().boundingRect(
+                    QRect(0, 0, temp_width, 0), Qt.TextFlag.TextWordWrap, self.__text_label.text()).height())
 
             text_section_height = (self.__text_section_margins.top()
-                                   + title_height + self.__text_section_spacing
+                                   + title_height + text_section_spacing
                                    + text_height + self.__text_section_margins.bottom())
 
             height = (self.__margins.top()
@@ -561,8 +577,14 @@ class Toast(QDialog):
                 temp_text_height = (self.__text_label.fontMetrics().boundingRect(
                     QRect(0, 0, temp_width, 0), Qt.TextFlag.TextWordWrap, self.__text_label.text()).height())
 
+                if self.__title == '':
+                    temp_title_height = 0
+
+                if self.__text == '':
+                    temp_text_height = 0
+
                 temp_text_section_height = (self.__text_section_margins.top()
-                                            + temp_title_height + self.__text_section_spacing
+                                            + temp_title_height + text_section_spacing
                                             + temp_text_height + self.__text_section_margins.bottom())
 
                 temp_height = (self.__margins.top()
@@ -621,7 +643,7 @@ class Toast(QDialog):
         self.__drop_shadow_layer_5.move(4, 4)
 
         # Resize window
-        self.resize(total_width, total_height)
+        self.setFixedSize(total_width, total_height)
         self.__notification.setFixedSize(width, height)
         self.__notification.move(Toast.__DROP_SHADOW_SIZE,
                                  Toast.__DROP_SHADOW_SIZE)
@@ -672,8 +694,8 @@ class Toast(QDialog):
                                                  - text_section_height)
 
         # Resize title and text labels
-        self.__title_label.resize(title_width, title_height)
-        self.__text_label.resize(text_width, text_height)
+        self.__title_label.setFixedSize(title_width, title_height)
+        self.__text_label.setFixedSize(text_width, text_height)
 
         # Move title and text labels
         if self.__show_icon:
