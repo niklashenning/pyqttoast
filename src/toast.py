@@ -179,10 +179,12 @@ class Toast(QDialog):
 
         # Timer for hiding the notification after set duration
         self.__duration_timer = QTimer(self)
+        self.__duration_timer.setSingleShot(True)
         self.__duration_timer.timeout.connect(self.hide)
 
         # Timer for updating the duration bar
         self.__duration_bar_timer = QTimer(self)
+        self.__duration_timer.setSingleShot(True)
         self.__duration_bar_timer.timeout.connect(self.__update_duration_bar)
 
         # Apply stylesheet
@@ -246,17 +248,25 @@ class Toast(QDialog):
             # Calculate position and show (animate position too if not first notification)
             x, y = self.__calculate_position()
 
-            if len(Toast.__currently_shown) != 1:
+            # If not first toast on screen, also do a fade down/up animation
+            if len(Toast.__currently_shown) > 1:
+                # Calculate offset if predecessor toast is still in fade down / up animation
+                predecessor_toast = Toast.__currently_shown[Toast.__currently_shown.index(self) - 1]
+                predecessor_target_x, predecessor_target_y = predecessor_toast.__calculate_position()
+                predecessor_target_difference_y = abs(predecessor_toast.y() - predecessor_target_y)
+
+                # Calculate start position of fade down / up animation based on position
                 if (Toast.__position == ToastPosition.BOTTOM_RIGHT
                         or Toast.__position == ToastPosition.BOTTOM_LEFT
                         or Toast.__position == ToastPosition.BOTTOM_MIDDLE):
-                    self.move(x, y - int(self.height() / 1.5))
+                    self.move(x, y - int(self.height() / 1.5) - predecessor_target_difference_y)
 
                 elif (Toast.__position == ToastPosition.TOP_RIGHT
                       or Toast.__position == ToastPosition.TOP_LEFT
                       or Toast.__position == ToastPosition.TOP_MIDDLE):
-                    self.move(x, y + int(self.height() / 1.5))
+                    self.move(x, y + int(self.height() / 1.5) + predecessor_target_difference_y)
 
+                # Start fade down / up animation
                 self.pos_animation = QPropertyAnimation(self, b"pos")
                 self.pos_animation.setEndValue(QPoint(x, y))
                 self.pos_animation.setDuration(self.__fade_in_duration)
@@ -321,6 +331,7 @@ class Toast(QDialog):
 
             # Show next item from queue after updating
             timer = QTimer(self)
+            timer.setSingleShot(True)
             timer.timeout.connect(self.__show_next_in_queue)
             timer.start(self.__fade_in_duration)
 
@@ -364,7 +375,7 @@ class Toast(QDialog):
         """Show next toast in queue"""
 
         if len(Toast.__queue) > 0:
-            n = Toast.__queue.pop()
+            n = Toast.__queue.pop(0)
             n.show()
 
     def __calculate_position(self):
