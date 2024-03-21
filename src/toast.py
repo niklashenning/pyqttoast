@@ -21,7 +21,7 @@ class Toast(QDialog):
     __queue = []
 
     # Constants
-    __DURATION_BAR_UPDATE_INTERVAL = 10
+    __DURATION_BAR_UPDATE_INTERVAL = 1
     __DROP_SHADOW_SIZE = 5
     __SUCCESS_ACCENT_COLOR = QColor('#3E9141')
     __WARNING_ACCENT_COLOR = QColor('#E8B849')
@@ -221,6 +221,33 @@ class Toast(QDialog):
             # Restart duration bar animation if enabled
             if self.__show_duration_bar:
                 self.__duration_bar_timer.start(Toast.__DURATION_BAR_UPDATE_INTERVAL)
+
+    def setFixedSize(self, size: QSize):
+        """Set a fixed toast size
+
+        :param size: fixed size
+        """
+
+        self.setMinimumSize(size)
+        self.setMaximumSize(size)
+
+    def setFixedWidth(self, width: int):
+        """Set a fixed toast width
+
+        :param width: fixed width
+        """
+
+        self.setMinimumWidth(width)
+        self.setMaximumWidth(width)
+
+    def setFixedHeight(self, height: int):
+        """Set a fixed toast height
+
+        :param height: fixed height
+        """
+
+        self.setMinimumHeight(height)
+        self.setMaximumHeight(height)
 
     def show(self):
         """Show the toast notification"""
@@ -654,7 +681,7 @@ class Toast(QDialog):
         self.__drop_shadow_layer_5.move(4, 4)
 
         # Resize window
-        self.setFixedSize(total_width, total_height)
+        super().setFixedSize(total_width, total_height)
         self.__notification.setFixedSize(width, height)
         self.__notification.move(Toast.__DROP_SHADOW_SIZE,
                                  Toast.__DROP_SHADOW_SIZE)
