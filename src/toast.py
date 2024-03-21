@@ -64,7 +64,7 @@ class Toast(QDialog):
         self.__close_button_alignment = ToastButtonAlignment.TOP
         self.__fade_in_duration = 250
         self.__fade_out_duration = 250
-        self.__reset_countdown_on_hover = True
+        self.__reset_duration_on_hover = True
         self.__stay_on_top = True
         self.__border_radius = 0
         self.__background_color = Toast.__DEFAULT_BACKGROUND_COLOR
@@ -192,13 +192,13 @@ class Toast(QDialog):
 
     def enterEvent(self, event):
         """Event that happens every time the mouse enters this widget.
-        If reset_countdown_on_hover is enabled, reset the countdown
+        If reset_duration_on_hover is enabled, reset the countdown
 
         :param event: the event sent by PyQt
         """
 
         # Reset timer if hovered and resetting is enabled
-        if self.__duration != 0 and self.__duration_timer.isActive() and self.__reset_countdown_on_hover:
+        if self.__duration != 0 and self.__duration_timer.isActive() and self.__reset_duration_on_hover:
             self.__duration_timer.stop()
 
             # Reset duration bar if enabled
@@ -209,13 +209,13 @@ class Toast(QDialog):
 
     def leaveEvent(self, event):
         """Event that happens every time the mouse leaves this widget.
-        If reset_countdown_on_hover is enabled, restart the countdown
+        If reset_duration_on_hover is enabled, restart the countdown
 
         :param event: the event sent by PyQt
         """
 
         # Start timer again when leaving notification and reset is enabled
-        if self.__duration != 0 and not self.__duration_timer.isActive() and self.__reset_countdown_on_hover:
+        if self.__duration != 0 and not self.__duration_timer.isActive() and self.__reset_duration_on_hover:
             self.__duration_timer.start(self.__duration)
 
             # Restart duration bar animation if enabled
@@ -1117,23 +1117,23 @@ class Toast(QDialog):
             return
         self.__fade_out_duration = duration
 
-    def isResetCountdownOnHover(self) -> bool:
-        """Get whether the countdown resets on hover
+    def isResetDurationOnHover(self) -> bool:
+        """Get whether the duration resets on hover
 
-        :return: whether the countdown resets on hover
+        :return: whether the duration resets on hover
         """
 
-        return self.__reset_countdown_on_hover
+        return self.__reset_duration_on_hover
 
-    def setResetCountdownOnHover(self, on: bool):
-        """Set whether the countdown should reset on hover
+    def setResetDurationOnHover(self, on: bool):
+        """Set whether the duration should reset on hover
 
-        :param on: whether the countdown should reset on hover
+        :param on: whether the duration should reset on hover
         """
 
         if self.__used:
             return
-        self.__reset_countdown_on_hover = on
+        self.__reset_duration_on_hover = on
 
     def isStayOnTop(self) -> bool:
         """Get whether the toast always stays on top of other windows
