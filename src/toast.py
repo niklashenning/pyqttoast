@@ -33,12 +33,12 @@ class Toast(QDialog):
     __DEFAULT_TITLE_COLOR = QColor('#000000')
     __DEFAULT_TEXT_COLOR = QColor('#5C5C5C')
     __DEFAULT_ICON_SEPARATOR_COLOR = QColor('#D9D9D9')
-    __DEFAULT_CLOSE_BUTTON_COLOR = QColor('#000000')
+    __DEFAULT_CLOSE_BUTTON_ICON_COLOR = QColor('#000000')
     __DEFAULT_BACKGROUND_COLOR_DARK = QColor('#292929')
     __DEFAULT_TITLE_COLOR_DARK = QColor('#FFFFFF')
     __DEFAULT_TEXT_COLOR_DARK = QColor('#D0D0D0')
     __DEFAULT_ICON_SEPARATOR_COLOR_DARK = QColor('#585858')
-    __DEFAULT_CLOSE_BUTTON_COLOR_DARK = QColor('#C9C9C9')
+    __DEFAULT_CLOSE_BUTTON_ICON_COLOR_DARK = QColor('#C9C9C9')
 
     # Close event
     closed = Signal()
@@ -73,7 +73,7 @@ class Toast(QDialog):
         self.__text_color = Toast.__DEFAULT_TEXT_COLOR
         self.__icon_color = Toast.__DEFAULT_ACCENT_COLOR
         self.__icon_separator_color = Toast.__DEFAULT_ICON_SEPARATOR_COLOR
-        self.__close_button_icon_color = Toast.__DEFAULT_CLOSE_BUTTON_COLOR
+        self.__close_button_icon_color = Toast.__DEFAULT_CLOSE_BUTTON_ICON_COLOR
         self.__duration_bar_color = Toast.__DEFAULT_ACCENT_COLOR
         self.__title_font = QFont()
         self.__title_font.setFamily('Arial')
@@ -353,13 +353,13 @@ class Toast(QDialog):
             self.closed.emit()
 
             # Update every other currently shown notification
-            for n in Toast.__currently_shown:
-                n.__update_position_y()
+            for toast in Toast.__currently_shown:
+                toast.__update_position_y()
 
             # Show next item from queue after updating
             timer = QTimer(self)
             timer.setSingleShot(True)
-            timer.timeout.connect(self.__show_next_in_queue)
+            timer.timeout.connect(Toast.__show_next_in_queue)
             timer.start(self.__fade_in_duration)
 
     def __update_duration_bar(self):
@@ -387,6 +387,17 @@ class Toast(QDialog):
         self.pos_animation.setDuration(Toast.__UPDATE_POSITION_DURATION)
         self.pos_animation.start()
 
+    def __update_position_x(self):
+        """Update the x position of the toast with an animation"""
+
+        x, y = self.__calculate_position()
+
+        # Animate position change
+        self.pos_animation = QPropertyAnimation(self, b"pos")
+        self.pos_animation.setEndValue(QPoint(x, self.y()))
+        self.pos_animation.setDuration(Toast.__UPDATE_POSITION_DURATION)
+        self.pos_animation.start()
+
     def __update_position_y(self):
         """Update the y position of the toast with an animation"""
 
@@ -397,13 +408,6 @@ class Toast(QDialog):
         self.pos_animation.setEndValue(QPoint(self.x(), y))
         self.pos_animation.setDuration(Toast.__UPDATE_POSITION_DURATION)
         self.pos_animation.start()
-
-    def __show_next_in_queue(self):
-        """Show next toast in queue"""
-
-        if len(Toast.__queue) > 0:
-            n = Toast.__queue.pop(0)
-            n.show()
 
     def __calculate_position(self):
         """Calculate x and y position of the toast
@@ -1861,7 +1865,7 @@ class Toast(QDialog):
                 or preset == ToastPreset.ERROR
                 or preset == ToastPreset.INFORMATION):
             self.setBackgroundColor(Toast.__DEFAULT_BACKGROUND_COLOR)
-            self.setCloseButtonIconColor(Toast.__DEFAULT_CLOSE_BUTTON_COLOR)
+            self.setCloseButtonIconColor(Toast.__DEFAULT_CLOSE_BUTTON_ICON_COLOR)
             self.__show_icon = True
             self.setIconSeparatorColor(Toast.__DEFAULT_ICON_SEPARATOR_COLOR)
             self.setShowDurationBar(True)
@@ -1873,7 +1877,7 @@ class Toast(QDialog):
                 or preset == ToastPreset.ERROR_DARK
                 or preset == ToastPreset.INFORMATION_DARK):
             self.setBackgroundColor(Toast.__DEFAULT_BACKGROUND_COLOR_DARK)
-            self.setCloseButtonIconColor(Toast.__DEFAULT_CLOSE_BUTTON_COLOR_DARK)
+            self.setCloseButtonIconColor(Toast.__DEFAULT_CLOSE_BUTTON_ICON_COLOR_DARK)
             self.__show_icon = True
             self.setIconSeparatorColor(Toast.__DEFAULT_ICON_SEPARATOR_COLOR_DARK)
             self.setShowDurationBar(True)
@@ -1909,6 +1913,35 @@ class Toast(QDialog):
 
         self.__title_label.setStyleSheet('color: {};'.format(self.__title_color.name()))
         self.__text_label.setStyleSheet('color: {};'.format(self.__text_color.name()))
+
+    @staticmethod
+    def __update_currently_showing_position_xy():
+        """Update the x and y position of every currently showing toast"""
+
+        for toast in Toast.__currently_shown:
+            toast.__update_position_xy()
+
+    @staticmethod
+    def __update_currently_showing_position_x():
+        """Update the x position of every currently showing toast"""
+
+        for toast in Toast.__currently_shown:
+            toast.__update_position_x()
+
+    @staticmethod
+    def __update_currently_showing_position_y():
+        """Update the y position of every currently showing toast"""
+
+        for toast in Toast.__currently_shown:
+            toast.__update_position_y()
+
+    @staticmethod
+    def __show_next_in_queue():
+        """Show next toast in queue"""
+
+        if len(Toast.__queue) > 0:
+            next_toast = Toast.__queue.pop(0)
+            next_toast.show()
 
     @staticmethod
     def __recolor_image(image: QImage, width: int, height: int, color: QColor):
@@ -1982,8 +2015,12 @@ class Toast(QDialog):
 
         :param maximum_on_screen: new maximum toast amount
         """
-
+        freed_spaces = maximum_on_screen - Toast.__maximum_on_screen
         Toast.__maximum_on_screen = maximum_on_screen
+
+        if freed_spaces > 0:
+            for i in range(freed_spaces):
+                Toast.__show_next_in_queue()
 
     @staticmethod
     def getSpacing() -> int:
@@ -2002,6 +2039,7 @@ class Toast(QDialog):
         """
 
         Toast.__spacing = spacing
+        Toast.__update_currently_showing_position_y()
 
     @staticmethod
     def getOffsetX() -> int:
@@ -2020,6 +2058,7 @@ class Toast(QDialog):
         """
 
         Toast.__offset_x = offset_x
+        Toast.__update_currently_showing_position_x()
 
     @staticmethod
     def getOffsetY() -> int:
@@ -2038,6 +2077,7 @@ class Toast(QDialog):
         """
 
         Toast.__offset_y = offset_y
+        Toast.__update_currently_showing_position_y()
 
     @staticmethod
     def getOffset() -> tuple[int, int]:
@@ -2058,6 +2098,7 @@ class Toast(QDialog):
 
         Toast.__offset_x = offset_x
         Toast.__offset_y = offset_y
+        Toast.__update_currently_showing_position_xy()
 
     @staticmethod
     def isAlwaysOnMainScreen() -> bool:
@@ -2076,6 +2117,7 @@ class Toast(QDialog):
         """
 
         Toast.__always_on_main_screen = on
+        Toast.__update_currently_showing_position_xy()
 
     @staticmethod
     def getPosition() -> ToastPosition:
@@ -2100,6 +2142,7 @@ class Toast(QDialog):
                 or position == ToastPosition.TOP_LEFT
                 or position == ToastPosition.TOP_MIDDLE):
             Toast.__position = position
+            Toast.__update_currently_showing_position_xy()
 
     @staticmethod
     def getCount() -> int:
