@@ -21,12 +21,12 @@ class ToastIcon(Enum):
 
 
 class ToastPosition(Enum):
-    BOTTOM_RIGHT = 1
-    BOTTOM_LEFT = 2
-    BOTTOM_MIDDLE = 3
-    TOP_RIGHT = 4
-    TOP_LEFT = 5
-    TOP_MIDDLE = 6
+    BOTTOM_LEFT = 1
+    BOTTOM_MIDDLE = 2
+    BOTTOM_RIGHT = 3
+    TOP_LEFT = 4
+    TOP_MIDDLE = 5
+    TOP_RIGHT = 6
 
 
 class ToastButtonAlignment(Enum):

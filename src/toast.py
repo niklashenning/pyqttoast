@@ -21,6 +21,7 @@ class Toast(QDialog):
     __queue = []
 
     # Constants
+    __UPDATE_POSITION_DURATION = 200
     __DURATION_BAR_UPDATE_INTERVAL = 1
     __DROP_SHADOW_SIZE = 5
     __SUCCESS_ACCENT_COLOR = QColor('#3E9141')
@@ -255,10 +256,10 @@ class Toast(QDialog):
         # Check if already used
         if self.__used:
             return
-        self.__used = True
 
         # If max notifications on screen not reached, show notification
         if Toast.__maximum_on_screen > len(Toast.__currently_shown):
+            self.__used = True
             Toast.__currently_shown.append(self)
 
             # Setup UI
@@ -318,7 +319,6 @@ class Toast(QDialog):
         else:
             # Add notification to queue instead
             Toast.__queue.append(self)
-            self.__used = False
 
     def hide(self):
         """Start hiding process of the toast notification"""
@@ -384,7 +384,7 @@ class Toast(QDialog):
         # Animate position change
         self.pos_animation = QPropertyAnimation(self, b"pos")
         self.pos_animation.setEndValue(QPoint(x, y))
-        self.pos_animation.setDuration(self.__fade_out_duration)
+        self.pos_animation.setDuration(Toast.__UPDATE_POSITION_DURATION)
         self.pos_animation.start()
 
     def __update_position_y(self):
@@ -395,7 +395,7 @@ class Toast(QDialog):
         # Animate position change
         self.pos_animation = QPropertyAnimation(self, b"pos")
         self.pos_animation.setEndValue(QPoint(self.x(), y))
-        self.pos_animation.setDuration(self.__fade_out_duration)
+        self.pos_animation.setDuration(Toast.__UPDATE_POSITION_DURATION)
         self.pos_animation.start()
 
     def __show_next_in_queue(self):
@@ -1084,7 +1084,7 @@ class Toast(QDialog):
     def getFadeInDuration(self) -> int:
         """Get the fade in duration of the toast
 
-        :return: fade in duration
+        :return: fade in duration in milliseconds
         """
 
         return self.__fade_in_duration
@@ -1092,7 +1092,7 @@ class Toast(QDialog):
     def setFadeInDuration(self, duration: int):
         """Set the fade in duration of the toast
 
-        :param duration: new fade in duration
+        :param duration: new fade in duration in milliseconds
         """
 
         if self.__used:
@@ -1102,7 +1102,7 @@ class Toast(QDialog):
     def getFadeOutDuration(self) -> int:
         """Get the fade out duration of the toast
 
-        :return: fade out duration
+        :return: fade out duration in milliseconds
         """
 
         return self.__fade_out_duration
@@ -1110,7 +1110,7 @@ class Toast(QDialog):
     def setFadeOutDuration(self, duration: int):
         """Set the fade out duration of the toast
 
-        :param duration: new fade out duration
+        :param duration: new fade out duration in milliseconds
         """
 
         if self.__used:
