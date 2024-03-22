@@ -1,6 +1,6 @@
 # PyQt Toast
 
-[![PyPI](https://img.shields.io/badge/pypi-v1.0.0-blue)](https://github.com/niklashenning/pyqt-toast)
+[![PyPI](https://img.shields.io/badge/pypi-v1.0.0-blue)](https://pypi.org/project/pyqt-toast-notification)
 [![Python](https://img.shields.io/badge/python-3.7+-blue)](https://github.com/niklashenning/pyqt-toast)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
