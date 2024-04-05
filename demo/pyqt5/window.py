@@ -51,7 +51,7 @@ class Window(QMainWindow):
         self.position_dropdown = QComboBox()
         self.position_dropdown.addItems(['BOTTOM_LEFT', 'BOTTOM_MIDDLE',
                                          'BOTTOM_RIGHT', 'TOP_LEFT',
-                                         'TOP_MIDDLE', 'TOP_RIGHT'])
+                                         'TOP_MIDDLE', 'TOP_RIGHT', 'CENTER'])
         self.position_dropdown.setCurrentIndex(2)
         self.position_dropdown.setFixedHeight(26)
 
@@ -249,6 +249,8 @@ class Window(QMainWindow):
             Toast.setPosition(ToastPosition.TOP_MIDDLE)
         elif position == 'TOP_RIGHT':
             Toast.setPosition(ToastPosition.TOP_RIGHT)
+        elif position == 'CENTER':
+            Toast.setPosition(ToastPosition.CENTER)
 
     def show_preset_toast(self):
         toast = Toast(self)

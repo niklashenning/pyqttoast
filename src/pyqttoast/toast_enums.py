@@ -27,6 +27,7 @@ class ToastPosition(Enum):
     TOP_LEFT = 4
     TOP_MIDDLE = 5
     TOP_RIGHT = 6
+    CENTER = 7
 
 
 class ToastButtonAlignment(Enum):
