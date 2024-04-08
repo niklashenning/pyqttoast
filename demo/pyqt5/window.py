@@ -135,9 +135,9 @@ class Window(QMainWindow):
         self.reset_on_hover_checkbox = QCheckBox('Reset duration on hover')
         self.reset_on_hover_checkbox.setChecked(True)
 
-        self.close_button_alignment_dropdown = QComboBox()
-        self.close_button_alignment_dropdown.addItems(['TOP', 'MIDDLE', 'BOTTOM'])
-        self.close_button_alignment_dropdown.setFixedHeight(24)
+        self.close_button_settings_dropdown = QComboBox()
+        self.close_button_settings_dropdown.addItems(['TOP', 'MIDDLE', 'BOTTOM', 'DISABLED'])
+        self.close_button_settings_dropdown.setFixedHeight(24)
 
         self.min_width_spinbox = QSpinBox()
         self.min_width_spinbox.setRange(0, 1000)
@@ -195,7 +195,7 @@ class Window(QMainWindow):
         double_form_layout_1.addWidget(QLabel('Border radius:'))
         double_form_layout_1.addWidget(self.border_radius_spinbox)
         double_form_layout_1.addWidget(QLabel('Close button:'))
-        double_form_layout_1.addWidget(self.close_button_alignment_dropdown)
+        double_form_layout_1.addWidget(self.close_button_settings_dropdown)
 
         double_form_layout_2 = QHBoxLayout()
         double_form_layout_2.addWidget(QLabel('Min width:'))
@@ -329,12 +329,14 @@ class Window(QMainWindow):
         elif selected_icon == 'CLOSE':
             toast.setIcon(ToastIcon.CLOSE)
 
-        selected_close_button_icon_alignment = self.close_button_alignment_dropdown.currentText()
-        if selected_close_button_icon_alignment == 'TOP':
+        selected_close_button_setting = self.close_button_settings_dropdown.currentText()
+        if selected_close_button_setting == 'TOP':
             toast.setCloseButtonAlignment(ToastButtonAlignment.TOP)
-        elif selected_close_button_icon_alignment == 'MIDDLE':
+        elif selected_close_button_setting == 'MIDDLE':
             toast.setCloseButtonAlignment(ToastButtonAlignment.MIDDLE)
-        elif selected_close_button_icon_alignment == 'BOTTOM':
+        elif selected_close_button_setting == 'BOTTOM':
             toast.setCloseButtonAlignment(ToastButtonAlignment.BOTTOM)
+        elif selected_close_button_setting == 'DISABLED':
+            toast.setShowCloseButton(False)
 
         toast.show()

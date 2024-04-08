@@ -1,8 +1,8 @@
 # PyQt Toast
 
-[![PyPI](https://img.shields.io/badge/pypi-v1.0.0-blue)](https://pypi.org/project/pyqt-toast-notification)
+[![PyPI](https://img.shields.io/badge/pypi-v1.1.0-blue)](https://pypi.org/project/pyqt-toast-notification/)
 [![Python](https://img.shields.io/badge/python-3.7+-blue)](https://github.com/niklashenning/pyqt-toast)
-[![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+[![License](https://img.shields.io/badge/license-MIT-green)](https://github.com/niklashenning/pyqt-toast/blob/master/LICENSE)
 
 A fully customizable and modern toast notification library for PyQt and PySide
 
@@ -102,7 +102,7 @@ toast.setIcon(QPixmap('path/to/your/icon.png'))
 ```
 > **AVAILABLE ICONS:** <br> `SUCCESS`, `WARNING`, `ERROR`, `INFORMATION`, `CLOSE`
 
-* **Settings the icon size:**
+* **Setting the icon size:**
 ```python
 toast.setIconSize(QSize(14, 14))  # Default: QSize(18, 18)
 ```
@@ -113,6 +113,10 @@ toast.setCloseButtonAlignment(ToastButtonAlignment.MIDDLE)  # Default: ToastButt
 ```
 > **AVAILABLE ALIGNMENTS:** <br> `TOP`, `MIDDLE`, `BOTTOM`
 
+* **Enabling or disabling the close button:**
+```python
+toast.setShowCloseButton(False)  # Default: True
+```
 
 * **Customizing the duration of the fade animations (milliseconds):**
 ```python
@@ -195,4 +199,4 @@ https://github.com/niklashenning/pyqt-toast/assets/58544929/f4d7f4a4-6d69-4087-a
 The demos for PyQt5, PyQt6, and PySide6 can be found in the [demo](demo) folder.
 
 ## License
-This software is licensed under the [MIT license](LICENSE).
+This software is licensed under the [MIT license](https://github.com/niklashenning/pyqt-toast/blob/master/LICENSE).
