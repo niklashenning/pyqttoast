@@ -60,6 +60,7 @@ class Toast(QDialog):
         self.__show_icon = False
         self.__icon_size = QSize(18, 18)
         self.__close_button_icon = self.__get_icon_from_enum(ToastIcon.CLOSE)
+        self.__show_close_button = True
         self.__close_button_icon_size = QSize(10, 10)
         self.__close_button_size = QSize(24, 24)
         self.__close_button_alignment = ToastButtonAlignment.TOP
@@ -532,16 +533,20 @@ class Toast(QDialog):
                                    + self.__icon_widget.height() + self.__icon_margins.bottom()
                                    + self.__icon_section_margins.bottom())
 
-        # Calculate height and close button section
-        close_button_section_height = (self.__close_button_margins.top()
-                                       + self.__close_button.height()
-                                       + self.__close_button_margins.bottom())
+        # Calculate close button section height
+        close_button_width = self.__close_button.width() if self.__show_close_button else 0
+        close_button_height = self.__close_button.height() if self.__show_close_button else 0
+        close_button_margins = self.__close_button_margins if self.__show_close_button else QMargins(0, 0, 0, 0)
+
+        close_button_section_height = (close_button_margins.top()
+                                       + close_button_height
+                                       + close_button_margins.bottom())
 
         # Calculate needed width and height
         width = (self.__margins.left() + icon_section_width + self.__text_section_margins.left()
                  + max(title_width, text_width) + self.__text_section_margins.right()
-                 + self.__close_button_margins.left() + self.__close_button.width()
-                 + self.__close_button_margins.right() + self.__margins.right())
+                 + close_button_margins.left() + close_button_width
+                 + close_button_margins.right() + self.__margins.right())
 
         height = (self.__margins.top()
                   + max(icon_section_height, text_section_height, close_button_section_height)
@@ -661,8 +666,8 @@ class Toast(QDialog):
             # Recalculate width
             width = (self.__margins.left() + icon_section_width + self.__text_section_margins.left()
                      + max(title_width, text_width) + self.__text_section_margins.right()
-                     + self.__close_button_margins.left() + self.__close_button.width()
-                     + self.__close_button_margins.right() + self.__margins.right())
+                     + close_button_margins.left() + close_button_width
+                     + close_button_margins.right() + self.__margins.right())
 
             # If min height not met, set height to min height
             if height < self.minimumHeight():
@@ -808,20 +813,24 @@ class Toast(QDialog):
 
         # Move close button to top, middle, or bottom position
         if self.__close_button_alignment == ToastButtonAlignment.TOP:
-            self.__close_button.move(width - self.__close_button.width()
-                                     - self.__close_button_margins.right() - self.__margins.right(),
-                                     self.__margins.top() + self.__close_button_margins.top())
+            self.__close_button.move(width - close_button_width
+                                     - close_button_margins.right() - self.__margins.right(),
+                                     self.__margins.top() + close_button_margins.top())
         elif self.__close_button_alignment == ToastButtonAlignment.MIDDLE:
-            self.__close_button.move(width - self.__close_button.width()
-                                     - self.__close_button_margins.right() - self.__margins.right(),
-                                     math.ceil((height - self.__close_button.height()
+            self.__close_button.move(width - close_button_width
+                                     - close_button_margins.right() - self.__margins.right(),
+                                     math.ceil((height - close_button_height
                                                - duration_bar_height) / 2))
         elif self.__close_button_alignment == ToastButtonAlignment.BOTTOM:
-            self.__close_button.move(width - self.__close_button.width()
-                                     - self.__close_button_margins.right() - self.__margins.right(),
-                                     height - self.__close_button.height()
+            self.__close_button.move(width - close_button_width
+                                     - close_button_margins.right() - self.__margins.right(),
+                                     height - close_button_height
                                      - self.__margins.bottom()
-                                     - self.__close_button_margins.bottom() - duration_bar_height)
+                                     - close_button_margins.bottom() - duration_bar_height)
+
+        # Hide close button if disabled
+        if not self.__show_close_button:
+            self.__close_button.setVisible(False)
 
         # Resize, move, and show duration bar if enabled
         if self.__show_duration_bar:
@@ -941,7 +950,7 @@ class Toast(QDialog):
         return self.__show_icon
 
     def setShowIcon(self, on: bool):
-        """Get whether the icon should be shown
+        """Set whether the icon should be shown
 
         :param on: whether the icon should be shown
         """
@@ -995,6 +1004,24 @@ class Toast(QDialog):
 
         self.__close_button.setIcon(QIcon(self.__close_button_icon))
         self.setCloseButtonIconColor(self.__close_button_icon_color)
+
+    def isShowCloseButton(self) -> bool:
+        """Get whether the close button is enabled
+
+        :return: whether the close button is enabled
+        """
+
+        return self.__show_close_button
+
+    def setShowCloseButton(self, show: bool):
+        """Set whether the close button should be shown
+
+        :param show: whether the close button should be shown
+        """
+
+        if self.__used:
+            return
+        self.__show_close_button = show
 
     def getCloseButtonIconSize(self) -> QSize:
         """Get the size of the close button icon
