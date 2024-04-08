@@ -291,7 +291,8 @@ class Toast(QDialog):
 
                 elif (Toast.__position == ToastPosition.TOP_RIGHT
                       or Toast.__position == ToastPosition.TOP_LEFT
-                      or Toast.__position == ToastPosition.TOP_MIDDLE):
+                      or Toast.__position == ToastPosition.TOP_MIDDLE
+                      or Toast.__position == ToastPosition.CENTER):
                     self.move(x, y + int(self.height() / 1.5) + predecessor_target_difference_y)
 
                 # Start fade down / up animation
@@ -479,6 +480,15 @@ class Toast(QDialog):
                  - self.__notification.width() / 2)
             y = (current_screen.geometry().y()
                  + Toast.__offset_y + y_offset)
+
+        elif Toast.__position == ToastPosition.CENTER:
+            x = (current_screen.geometry().x()
+                 + current_screen.geometry().width() / 2
+                 - self.__notification.width() / 2)
+            y = (current_screen.geometry().y()
+                 + current_screen.geometry().height() / 2
+                 - self.__notification.height() / 2
+                 + y_offset)
 
         x = int(x - Toast.__DROP_SHADOW_SIZE)
         y = int(y - Toast.__DROP_SHADOW_SIZE)
@@ -1259,8 +1269,6 @@ class Toast(QDialog):
         self.__icon_color = color
         recolored_image = self.__recolor_image(self.__icon_widget.icon().pixmap(
                                                self.__icon_widget.iconSize()).toImage(),
-                                               self.__icon_widget.iconSize().width(),
-                                               self.__icon_widget.iconSize().height(),
                                                color)
         self.__icon_widget.setIcon(QIcon(QPixmap(recolored_image)))
 
@@ -1302,8 +1310,6 @@ class Toast(QDialog):
         self.__close_button_icon_color = color
         recolored_image = self.__recolor_image(self.__close_button.icon().pixmap(
                                                self.__close_button.iconSize()).toImage(),
-                                               self.__close_button.iconSize().width(),
-                                               self.__close_button.iconSize().height(),
                                                color)
         self.__close_button.setIcon(QIcon(QPixmap(recolored_image)))
 
@@ -1944,19 +1950,17 @@ class Toast(QDialog):
             next_toast.show()
 
     @staticmethod
-    def __recolor_image(image: QImage, width: int, height: int, color: QColor):
+    def __recolor_image(image: QImage, color: QColor):
         """Take an image and return a copy with the colors changed
 
         :param image: image to recolor
-        :param width: width of the image
-        :param height: height of the image
         :param color: new color
         :return: recolored image
         """
 
         # Loop through every pixel
-        for x in range(0, width):
-            for y in range(0, height):
+        for x in range(0, image.width()):
+            for y in range(0, image.height()):
                 # Get current color of the pixel
                 current_color = image.pixelColor(x, y)
                 # Replace the rgb values with rgb of new color and keep alpha the same
@@ -2140,7 +2144,8 @@ class Toast(QDialog):
                 or position == ToastPosition.BOTTOM_MIDDLE
                 or position == ToastPosition.TOP_RIGHT
                 or position == ToastPosition.TOP_LEFT
-                or position == ToastPosition.TOP_MIDDLE):
+                or position == ToastPosition.TOP_MIDDLE
+                or position == ToastPosition.CENTER):
             Toast.__position = position
             Toast.__update_currently_showing_position_xy()
 
