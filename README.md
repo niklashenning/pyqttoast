@@ -11,7 +11,7 @@ A fully customizable and modern toast notification library for PyQt and PySide
 ## Features
 * Supports showing multiple toasts at the same time
 * Supports queueing of toasts
-* Supports 6 different positions
+* Supports 7 different positions
 * Supports multiple screens
 * Modern and fully customizable UI
 * Works with `PyQt5`, `PyQt6`, `PySide2`, and `PySide6`

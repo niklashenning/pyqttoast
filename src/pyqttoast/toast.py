@@ -488,7 +488,7 @@ class Toast(QDialog):
             y = (current_screen.geometry().y()
                  + current_screen.geometry().height() / 2
                  - self.__notification.height() / 2
-                 + Toast.__offset_y + y_offset)
+                 + y_offset)
 
         x = int(x - Toast.__DROP_SHADOW_SIZE)
         y = int(y - Toast.__DROP_SHADOW_SIZE)
