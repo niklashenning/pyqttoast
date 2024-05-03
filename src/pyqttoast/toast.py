@@ -3,11 +3,11 @@ import os
 from qtpy.QtGui import QGuiApplication
 from qtpy.QtCore import Qt, QPropertyAnimation, QPoint, QTimer, QSize, QMargins, QRect, Signal
 from qtpy.QtGui import QPixmap, QIcon, QColor, QFont, QImage, qRgba, QFontMetrics
-from qtpy.QtWidgets import QDialog, QPushButton, QLabel, QGraphicsOpacityEffect, QWidget
+from qtpy.QtWidgets import QPushButton, QLabel, QGraphicsOpacityEffect, QWidget
 from .toast_enums import ToastPreset, ToastIcon, ToastPosition, ToastButtonAlignment
 
 
-class Toast(QDialog):
+class Toast(QWidget):
 
     # Static attributes
     __maximum_on_screen = 3
@@ -43,7 +43,7 @@ class Toast(QDialog):
     # Close event
     closed = Signal()
 
-    def __init__(self, parent):
+    def __init__(self, parent=None):
         """Create a new Toast instance
 
         :param parent: the parent widget
@@ -95,7 +95,7 @@ class Toast(QDialog):
         self.__used = False
 
         # Window settings
-        self.setWindowFlags(Qt.WindowType.Window |
+        self.setWindowFlags(Qt.WindowType.Tool |
                             Qt.WindowType.CustomizeWindowHint |
                             Qt.WindowType.FramelessWindowHint)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
@@ -313,7 +313,8 @@ class Toast(QDialog):
             self.fade_in_animation.start()
 
             # Make sure title bar of parent is not grayed out
-            self.parent().activateWindow()
+            if self.parent() is not None:
+                self.parent().activateWindow()
 
             # Update every other currently shown notification
             for n in Toast.__currently_shown:
@@ -428,7 +429,7 @@ class Toast(QDialog):
         primary_screen = QGuiApplication.primaryScreen()
         current_screen = None
 
-        if Toast.__always_on_main_screen:
+        if Toast.__always_on_main_screen or self.parent() is None:
             current_screen = primary_screen
         else:
             screens = QGuiApplication.screens()
@@ -1195,12 +1196,12 @@ class Toast(QDialog):
         self.__stay_on_top = on
 
         if on:
-            self.setWindowFlags(Qt.WindowType.Window |
+            self.setWindowFlags(Qt.WindowType.Tool |
                                 Qt.WindowType.CustomizeWindowHint |
                                 Qt.WindowType.FramelessWindowHint |
                                 Qt.WindowType.WindowStaysOnTopHint)
         else:
-            self.setWindowFlags(Qt.WindowType.Window |
+            self.setWindowFlags(Qt.WindowType.Tool |
                                 Qt.WindowType.CustomizeWindowHint |
                                 Qt.WindowType.FramelessWindowHint)
 
