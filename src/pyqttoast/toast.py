@@ -76,13 +76,8 @@ class Toast(QWidget):
         self.__icon_separator_color = Toast.__DEFAULT_ICON_SEPARATOR_COLOR
         self.__close_button_icon_color = Toast.__DEFAULT_CLOSE_BUTTON_ICON_COLOR
         self.__duration_bar_color = Toast.__DEFAULT_ACCENT_COLOR
-        self.__title_font = QFont()
-        self.__title_font.setFamily('Arial')
-        self.__title_font.setPointSize(9)
-        self.__title_font.setBold(True)
-        self.__text_font = QFont()
-        self.__text_font.setFamily('Arial')
-        self.__text_font.setPointSize(9)
+        self.__title_font = QFont('Arial', 9, QFont.Weight.Bold)
+        self.__text_font = QFont('Arial', 9)
         self.__margins = QMargins(20, 18, 10, 18)
         self.__icon_margins = QMargins(0, 0, 15, 0)
         self.__icon_section_margins = QMargins(0, 0, 15, 0)
@@ -160,7 +155,7 @@ class Toast(QWidget):
         self.__duration_bar_chunk.setFixedHeight(20)
         self.__duration_bar_chunk.move(0, -16)
 
-        # Set default colors
+        # Set defaults
         self.setIcon(self.__icon)
         self.setIconSize(self.__icon_size)
         self.setIconColor(self.__icon_color)
