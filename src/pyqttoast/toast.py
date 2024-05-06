@@ -308,10 +308,6 @@ class Toast(QWidget):
             self.fade_in_animation.setEndValue(1)
             self.fade_in_animation.start()
 
-            # Make sure title bar of parent is not grayed out
-            if self.parent() is not None:
-                self.parent().activateWindow()
-
             # Update every other currently shown notification
             for n in Toast.__currently_shown:
                 n.__update_position_xy()
