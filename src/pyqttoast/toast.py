@@ -1,6 +1,6 @@
 import math
 import os
-from qtpy.QtGui import QGuiApplication
+from qtpy.QtGui import QGuiApplication, QScreen
 from qtpy.QtCore import Qt, QPropertyAnimation, QPoint, QTimer, QSize, QMargins, QRect, Signal
 from qtpy.QtGui import QPixmap, QIcon, QColor, QFont, QImage, qRgba, QFontMetrics
 from qtpy.QtWidgets import QPushButton, QLabel, QGraphicsOpacityEffect, QWidget
@@ -15,6 +15,7 @@ class Toast(QWidget):
     __offset_x = 20
     __offset_y = 45
     __always_on_main_screen = False
+    __fixed_screen = None
     __position = ToastPosition.BOTTOM_RIGHT
 
     __currently_shown = []
@@ -424,7 +425,9 @@ class Toast(QWidget):
         primary_screen = QGuiApplication.primaryScreen()
         current_screen = None
 
-        if Toast.__always_on_main_screen or self.parent() is None:
+        if Toast.__fixed_screen is not None:
+            current_screen = Toast.__fixed_screen
+        elif Toast.__always_on_main_screen or self.parent() is None:
             current_screen = primary_screen
         else:
             screens = QGuiApplication.screens()
@@ -2147,6 +2150,25 @@ class Toast(QWidget):
         Toast.__update_currently_showing_position_xy()
 
     @staticmethod
+    def getFixedScreen() -> QScreen | None:
+        """Get the fixed screen where the toasts are shown
+
+        :return: screen if fixed screen is set, else None
+        """
+
+        return Toast.__fixed_screen
+
+    @staticmethod
+    def setFixedScreen(screen: QScreen | None):
+        """Set a fixed screen where the toasts will be shown
+
+        :param screen: fixed screen (or None to unset)
+        """
+
+        Toast.__fixed_screen = screen
+        Toast.__update_currently_showing_position_xy()
+
+    @staticmethod
     def getPosition() -> ToastPosition:
         """Get the position where the toasts are shown
 
@@ -2157,7 +2179,7 @@ class Toast(QWidget):
 
     @staticmethod
     def setPosition(position: ToastPosition):
-        """Set the position where the toasts are shown
+        """Set the position where the toasts will be shown
 
         :param position: new position
         """
