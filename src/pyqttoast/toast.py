@@ -60,6 +60,8 @@ class Toast(QWidget):
         self.__icon = self.__get_icon_from_enum(ToastIcon.INFORMATION)
         self.__show_icon = False
         self.__icon_size = QSize(18, 18)
+        self.__show_icon_separator = True
+        self.__icon_separator_width = 2
         self.__close_button_icon = self.__get_icon_from_enum(ToastIcon.CLOSE)
         self.__show_close_button = True
         self.__close_button_icon_size = QSize(10, 10)
@@ -139,7 +141,6 @@ class Toast(QWidget):
 
         # Icon separator
         self.__icon_separator = QWidget(self.__notification)
-        self.__icon_separator.setFixedWidth(2)
 
         # Duration bar container (used to make border radius possible on 4 px high widget)
         self.__duration_bar_container = QWidget(self.__notification)
@@ -160,6 +161,7 @@ class Toast(QWidget):
         self.setIcon(self.__icon)
         self.setIconSize(self.__icon_size)
         self.setIconColor(self.__icon_color)
+        self.setIconSeparatorWidth(self.__icon_separator_width)
         self.setCloseButtonIcon(self.__close_button_icon)
         self.setCloseButtonIconSize(self.__close_button_icon_size)
         self.setCloseButtonSize(self.__close_button_size)
@@ -731,9 +733,6 @@ class Toast(QWidget):
                                        + math.ceil(forced_additional_height / 2)
                                        - math.floor(forced_reduced_height / 2))
 
-            # Show icon section
-            self.__icon_widget.setVisible(True)
-            self.__icon_separator.setVisible(True)
         else:
             # Hide icon section
             self.__icon_widget.setVisible(False)
@@ -756,6 +755,7 @@ class Toast(QWidget):
                                     + self.__icon_margins.left()
                                     + self.__icon_widget.width()
                                     + self.__icon_margins.right()
+                                    + self.__icon_separator.width()
                                     + self.__icon_section_margins.right()
                                     + self.__text_section_margins.left(),
                                     self.__margins.top()
@@ -769,6 +769,7 @@ class Toast(QWidget):
                                    + self.__icon_margins.left()
                                    + self.__icon_widget.width()
                                    + self.__icon_margins.right()
+                                   + self.__icon_separator.width()
                                    + self.__icon_section_margins.right()
                                    + self.__text_section_margins.left(),
                                    self.__margins.top()
@@ -974,6 +975,50 @@ class Toast(QWidget):
         self.__icon_widget.setFixedSize(size)
         self.__icon_widget.setIconSize(size)
         self.setIcon(self.__icon)
+
+    def isShowIconSeparator(self) -> bool:
+        """Get whether the icon separator is enabled
+
+        :return: whether the icon separator is enabled
+        """
+
+        return self.__show_icon_separator
+
+    def setShowIconSeparator(self, on: bool):
+        """Set whether the icon separator should be shown
+
+        :param on: whether the icon separator should be shown
+        """
+
+        if self.__used:
+            return
+        self.__show_icon_separator = on
+
+        if on:
+            self.__icon_separator.setFixedWidth(self.__icon_separator_width)
+        else:
+            self.__icon_separator.setFixedWidth(0)
+
+    def getIconSeparatorWidth(self) -> int:
+        """Get the width of the icon separator
+
+        :return: width
+        """
+
+        return self.__icon_separator_width
+
+    def setIconSeparatorWidth(self, width: int):
+        """Set the width of the icon separator
+
+        :param width: new width
+        """
+
+        if self.__used:
+            return
+        self.__icon_separator_width = width
+
+        if self.__show_icon_separator:
+            self.__icon_separator.setFixedWidth(width)
 
     def getCloseButtonIcon(self) -> QPixmap:
         """Get the icon of the close button
