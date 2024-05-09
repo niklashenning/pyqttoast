@@ -553,11 +553,11 @@ class Toast(QWidget):
         if width > self.maximumWidth():
             # Enable line break for title and text and recalculate size
 
-            new_title_width = title_width - (width - self.maximumWidth())
+            new_title_width = max(title_width, text_width) - (width - self.maximumWidth())
             if new_title_width > 0:
                 title_width = new_title_width
 
-            new_text_width = text_width - (width - self.maximumWidth())
+            new_text_width = max(title_width, text_width) - (width - self.maximumWidth())
             if new_text_width > 0:
                 text_width = new_text_width
 
@@ -742,8 +742,8 @@ class Toast(QWidget):
                                                  - text_section_height)
 
         # Resize title and text labels
-        self.__title_label.setFixedSize(title_width, title_height)
-        self.__text_label.setFixedSize(text_width, text_height)
+        self.__title_label.setFixedSize(max(title_width, text_width), title_height)
+        self.__text_label.setFixedSize(max(title_width, text_width), text_height)
 
         # Move title and text labels
         if self.__show_icon:
