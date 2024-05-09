@@ -442,20 +442,20 @@ class Toast(QWidget):
             x = (current_screen.geometry().width() - self.__notification.width()
                  - Toast.__offset_x + current_screen.geometry().x())
             y = (current_screen.geometry().height()
-                 - Toast.__currently_shown[0].__notification.height()
+                 - self.__notification.height()
                  - Toast.__offset_y + current_screen.geometry().y() - y_offset)
 
         elif Toast.__position == ToastPosition.BOTTOM_LEFT:
             x = current_screen.geometry().x() + Toast.__offset_x
             y = (current_screen.geometry().height()
-                 - Toast.__currently_shown[0].__notification.height()
+                 - self.__notification.height()
                  - Toast.__offset_y + current_screen.geometry().y() - y_offset)
 
         elif Toast.__position == ToastPosition.BOTTOM_MIDDLE:
             x = (current_screen.geometry().x()
                  + current_screen.geometry().width() / 2 - self.__notification.width() / 2)
             y = (current_screen.geometry().height()
-                 - Toast.__currently_shown[0].__notification.height()
+                 - self.__notification.height()
                  - Toast.__offset_y + current_screen.geometry().y() - y_offset)
 
         elif Toast.__position == ToastPosition.TOP_RIGHT:
