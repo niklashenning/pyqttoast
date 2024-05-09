@@ -44,7 +44,7 @@ class Toast(QWidget):
     # Close event
     closed = Signal()
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: QWidget = None):
         """Create a new Toast instance
 
         :param parent: the parent widget
@@ -93,9 +93,6 @@ class Toast(QWidget):
         self.__used = False
 
         # Window settings
-        self.setWindowFlags(Qt.WindowType.Tool |
-                            Qt.WindowType.CustomizeWindowHint |
-                            Qt.WindowType.FramelessWindowHint)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         self.setFocusPolicy(Qt.FocusPolicy.NoFocus)
 
@@ -2262,3 +2259,25 @@ class Toast(QWidget):
         """
 
         return len(Toast.__queue)
+
+    @staticmethod
+    def reset():
+        """Reset the Toast class completely (reset static attributes
+         to defaults, hide all toasts instantly, and clear queue)"""
+
+        # Reset static attributes
+        Toast.__maximum_on_screen = 3
+        Toast.__spacing = 10
+        Toast.__offset_x = 20
+        Toast.__offset_y = 45
+        Toast.__always_on_main_screen = False
+        Toast.__fixed_screen = None
+        Toast.__position = ToastPosition.BOTTOM_RIGHT
+
+        # Hide currently showing toasts and clear queue
+        for toast in Toast.__currently_shown:
+            toast.setVisible(False)
+            toast.deleteLater()
+
+        Toast.__currently_shown.clear()
+        Toast.__queue.clear()
