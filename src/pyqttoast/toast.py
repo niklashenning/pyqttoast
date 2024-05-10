@@ -3,11 +3,11 @@ import os
 from qtpy.QtGui import QGuiApplication, QScreen
 from qtpy.QtCore import Qt, QPropertyAnimation, QPoint, QTimer, QSize, QMargins, QRect, Signal
 from qtpy.QtGui import QPixmap, QIcon, QColor, QFont, QImage, qRgba, QFontMetrics
-from qtpy.QtWidgets import QPushButton, QLabel, QGraphicsOpacityEffect, QWidget
+from qtpy.QtWidgets import QDialog, QPushButton, QLabel, QGraphicsOpacityEffect, QWidget
 from .toast_enums import ToastPreset, ToastIcon, ToastPosition, ToastButtonAlignment
 
 
-class Toast(QWidget):
+class Toast(QDialog):
 
     # Static attributes
     __maximum_on_screen = 3
@@ -1232,14 +1232,25 @@ class Toast(QWidget):
         self.__stay_on_top = on
 
         if on:
-            self.setWindowFlags(Qt.WindowType.Tool |
-                                Qt.WindowType.CustomizeWindowHint |
-                                Qt.WindowType.FramelessWindowHint |
-                                Qt.WindowType.WindowStaysOnTopHint)
+            if self.parent() is not None:
+                self.setWindowFlags(Qt.WindowType.Window |
+                                    Qt.WindowType.CustomizeWindowHint |
+                                    Qt.WindowType.FramelessWindowHint |
+                                    Qt.WindowType.WindowStaysOnTopHint)
+            else:
+                self.setWindowFlags(Qt.WindowType.Tool |
+                                    Qt.WindowType.CustomizeWindowHint |
+                                    Qt.WindowType.FramelessWindowHint |
+                                    Qt.WindowType.WindowStaysOnTopHint)
         else:
-            self.setWindowFlags(Qt.WindowType.Tool |
-                                Qt.WindowType.CustomizeWindowHint |
-                                Qt.WindowType.FramelessWindowHint)
+            if self.parent() is not None:
+                self.setWindowFlags(Qt.WindowType.Window |
+                                    Qt.WindowType.CustomizeWindowHint |
+                                    Qt.WindowType.FramelessWindowHint)
+            else:
+                self.setWindowFlags(Qt.WindowType.Tool |
+                                    Qt.WindowType.CustomizeWindowHint |
+                                    Qt.WindowType.FramelessWindowHint)
 
     def getBorderRadius(self) -> int:
         """Get the border radius of the toast
