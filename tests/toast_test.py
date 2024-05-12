@@ -22,8 +22,8 @@ def test_initial_values(qtbot):
     toast = Toast()
     qtbot.addWidget(toast)
 
-    INFORMATION_IMAGE = QPixmap(ROOT_PATH + '/src/pyqttoast/icons/information.png').toImage()
-    CLOSE_IMAGE = QPixmap(ROOT_PATH + '/src/pyqttoast/icons/close.png').toImage()
+    information_image = QPixmap(ROOT_PATH + '/src/pyqttoast/icons/information.png').toImage()
+    close_image = QPixmap(ROOT_PATH + '/src/pyqttoast/icons/close.png').toImage()
 
     assert Toast.getMaximumOnScreen() == 3
     assert Toast.getSpacing() == 10
@@ -35,12 +35,12 @@ def test_initial_values(qtbot):
     assert toast.isShowDurationBar() == True
     assert toast.getTitle() == ''
     assert toast.getText() == ''
-    assert toast.getIcon().toImage() == INFORMATION_IMAGE
+    assert toast.getIcon().toImage() == information_image
     assert toast.isShowIcon() == False
     assert toast.getIconSize() == QSize(18, 18)
     assert toast.isShowIconSeparator() == True
     assert toast.getIconSeparatorWidth() == 2
-    assert toast.getCloseButtonIcon().toImage() == CLOSE_IMAGE
+    assert toast.getCloseButtonIcon().toImage() == close_image
     assert toast.isShowCloseButton() == True
     assert toast.getCloseButtonIconSize() == QSize(10, 10)
     assert toast.getCloseButtonSize() == QSize(24, 24)
@@ -72,8 +72,8 @@ def test_setters_after_show(qtbot):
     Test using setters after already having called the show method
     (Should not do anything since the toast cannot be modified after being shown)
     """
-    INFORMATION_IMAGE = QPixmap(ROOT_PATH + '/src/pyqttoast/icons/information.png').toImage()
-    CLOSE_IMAGE = QPixmap(ROOT_PATH + '/src/pyqttoast/icons/close.png').toImage()
+    information_image = QPixmap(ROOT_PATH + '/src/pyqttoast/icons/information.png').toImage()
+    close_image = QPixmap(ROOT_PATH + '/src/pyqttoast/icons/close.png').toImage()
 
     toast = Toast()
     qtbot.addWidget(toast)
@@ -118,12 +118,12 @@ def test_setters_after_show(qtbot):
     assert toast.isShowDurationBar() == True
     assert toast.getTitle() == ''
     assert toast.getText() == ''
-    assert toast.getIcon().toImage() == INFORMATION_IMAGE
+    assert toast.getIcon().toImage() == information_image
     assert toast.isShowIcon() == False
     assert toast.getIconSize() == QSize(18, 18)
     assert toast.isShowIconSeparator() == True
     assert toast.getIconSeparatorWidth() == 2
-    assert toast.getCloseButtonIcon().toImage() == CLOSE_IMAGE
+    assert toast.getCloseButtonIcon().toImage() == close_image
     assert toast.isShowCloseButton() == True
     assert toast.getCloseButtonIconSize() == QSize(10, 10)
     assert toast.getCloseButtonSize() == QSize(24, 24)
@@ -649,17 +649,17 @@ def test_set_icon_separator_width(qtbot):
 def test_set_close_button_icon(qtbot):
     """Test setting the close button icon of a toast"""
 
-    CLOSE_PIXMAP = QPixmap(ROOT_PATH + '/src/pyqttoast/icons/close.png')
-    ERROR_PIXMAP = QPixmap(ROOT_PATH + '/src/pyqttoast/icons/error.png')
+    close_pixmap = QPixmap(ROOT_PATH + '/src/pyqttoast/icons/close.png')
+    error_pixmap = QPixmap(ROOT_PATH + '/src/pyqttoast/icons/error.png')
 
     toast = Toast()
     qtbot.addWidget(toast)
 
     toast.setCloseButtonIcon(ToastIcon.ERROR)
-    assert toast.getCloseButtonIcon().toImage() == ERROR_PIXMAP.toImage()
+    assert toast.getCloseButtonIcon().toImage() == error_pixmap.toImage()
 
-    toast.setCloseButtonIcon(CLOSE_PIXMAP)
-    assert toast.getCloseButtonIcon().toImage() == CLOSE_PIXMAP.toImage()
+    toast.setCloseButtonIcon(close_pixmap)
+    assert toast.getCloseButtonIcon().toImage() == close_pixmap.toImage()
 
 
 def test_set_show_close_button(qtbot):
@@ -997,32 +997,34 @@ def test_set_minimum_width_height(qtbot):
 def test_apply_preset_light(qtbot):
     """Test applying light theme presets on a toast"""
 
-    SUCCESS_IMAGE = QPixmap(ROOT_PATH + '/src/pyqttoast/icons/success.png').toImage()
-    WARNING_IMAGE = QPixmap(ROOT_PATH + '/src/pyqttoast/icons/warning.png').toImage()
-    ERROR_IMAGE = QPixmap(ROOT_PATH + '/src/pyqttoast/icons/error.png').toImage()
-    INFORMATION_IMAGE = QPixmap(ROOT_PATH + '/src/pyqttoast/icons/information.png').toImage()
-    CLOSE_IMAGE = QPixmap(ROOT_PATH + '/src/pyqttoast/icons/close.png').toImage()
+    success_image = QPixmap(ROOT_PATH + '/src/pyqttoast/icons/success.png').toImage()
+    warning_image = QPixmap(ROOT_PATH + '/src/pyqttoast/icons/warning.png').toImage()
+    error_image = QPixmap(ROOT_PATH + '/src/pyqttoast/icons/error.png').toImage()
+    information_image = QPixmap(ROOT_PATH + '/src/pyqttoast/icons/information.png').toImage()
 
     toast = Toast()
     qtbot.addWidget(toast)
+    toast.setShowDurationBar(False)
+    toast.setShowIconSeparator(False)
+    toast.setIconSeparatorWidth(3)
 
     toast.applyPreset(ToastPreset.SUCCESS)
-    assert toast.getIcon().toImage() == SUCCESS_IMAGE
+    assert toast.getIcon().toImage() == success_image
     assert toast.getIconColor() == QColor('#3E9141')
     assert toast.getDurationBarColor() == QColor('#3E9141')
 
     toast.applyPreset(ToastPreset.WARNING)
-    assert toast.getIcon().toImage() == WARNING_IMAGE
+    assert toast.getIcon().toImage() == warning_image
     assert toast.getIconColor() == QColor('#E8B849')
     assert toast.getDurationBarColor() == QColor('#E8B849')
 
     toast.applyPreset(ToastPreset.ERROR)
-    assert toast.getIcon().toImage() == ERROR_IMAGE
+    assert toast.getIcon().toImage() == error_image
     assert toast.getIconColor() == QColor('#BA2626')
     assert toast.getDurationBarColor() == QColor('#BA2626')
 
     toast.applyPreset(ToastPreset.INFORMATION)
-    assert toast.getIcon().toImage() == INFORMATION_IMAGE
+    assert toast.getIcon().toImage() == information_image
     assert toast.getIconColor() == QColor('#007FFF')
     assert toast.getDurationBarColor() == QColor('#007FFF')
 
@@ -1033,36 +1035,38 @@ def test_apply_preset_light(qtbot):
     assert toast.getTextColor() == QColor('#5C5C5C')
     assert toast.isShowDurationBar() == True
     assert toast.isShowIcon() == True
+    assert toast.isShowIconSeparator() == True
+    assert toast.getIconSeparatorWidth() == 2
 
 
 def test_apply_preset_dark(qtbot):
     """Test applying dark theme presets on a toast"""
 
-    SUCCESS_IMAGE = QPixmap(ROOT_PATH + '/src/pyqttoast/icons/success.png').toImage()
-    WARNING_IMAGE = QPixmap(ROOT_PATH + '/src/pyqttoast/icons/warning.png').toImage()
-    ERROR_IMAGE = QPixmap(ROOT_PATH + '/src/pyqttoast/icons/error.png').toImage()
-    INFORMATION_IMAGE = QPixmap(ROOT_PATH + '/src/pyqttoast/icons/information.png').toImage()
+    success_image = QPixmap(ROOT_PATH + '/src/pyqttoast/icons/success.png').toImage()
+    warning_image = QPixmap(ROOT_PATH + '/src/pyqttoast/icons/warning.png').toImage()
+    error_image = QPixmap(ROOT_PATH + '/src/pyqttoast/icons/error.png').toImage()
+    information_image = QPixmap(ROOT_PATH + '/src/pyqttoast/icons/information.png').toImage()
 
     toast = Toast()
     qtbot.addWidget(toast)
 
     toast.applyPreset(ToastPreset.SUCCESS_DARK)
-    assert toast.getIcon().toImage() == SUCCESS_IMAGE
+    assert toast.getIcon().toImage() == success_image
     assert toast.getIconColor() == QColor('#3E9141')
     assert toast.getDurationBarColor() == QColor('#3E9141')
 
     toast.applyPreset(ToastPreset.WARNING_DARK)
-    assert toast.getIcon().toImage() == WARNING_IMAGE
+    assert toast.getIcon().toImage() == warning_image
     assert toast.getIconColor() == QColor('#E8B849')
     assert toast.getDurationBarColor() == QColor('#E8B849')
 
     toast.applyPreset(ToastPreset.ERROR_DARK)
-    assert toast.getIcon().toImage() == ERROR_IMAGE
+    assert toast.getIcon().toImage() == error_image
     assert toast.getIconColor() == QColor('#BA2626')
     assert toast.getDurationBarColor() == QColor('#BA2626')
 
     toast.applyPreset(ToastPreset.INFORMATION_DARK)
-    assert toast.getIcon().toImage() == INFORMATION_IMAGE
+    assert toast.getIcon().toImage() == information_image
     assert toast.getIconColor() == QColor('#007FFF')
     assert toast.getDurationBarColor() == QColor('#007FFF')
 

@@ -1951,9 +1951,7 @@ class Toast(QDialog):
                 or preset == ToastPreset.INFORMATION):
             self.setBackgroundColor(Toast.__DEFAULT_BACKGROUND_COLOR)
             self.setCloseButtonIconColor(Toast.__DEFAULT_CLOSE_BUTTON_ICON_COLOR)
-            self.__show_icon = True
             self.setIconSeparatorColor(Toast.__DEFAULT_ICON_SEPARATOR_COLOR)
-            self.setShowDurationBar(True)
             self.setTitleColor(Toast.__DEFAULT_TITLE_COLOR)
             self.setTextColor(Toast.__DEFAULT_TEXT_COLOR)
 
@@ -1963,11 +1961,14 @@ class Toast(QDialog):
                 or preset == ToastPreset.INFORMATION_DARK):
             self.setBackgroundColor(Toast.__DEFAULT_BACKGROUND_COLOR_DARK)
             self.setCloseButtonIconColor(Toast.__DEFAULT_CLOSE_BUTTON_ICON_COLOR_DARK)
-            self.__show_icon = True
             self.setIconSeparatorColor(Toast.__DEFAULT_ICON_SEPARATOR_COLOR_DARK)
-            self.setShowDurationBar(True)
             self.setTitleColor(Toast.__DEFAULT_TITLE_COLOR_DARK)
             self.setTextColor(Toast.__DEFAULT_TEXT_COLOR_DARK)
+
+        self.setShowDurationBar(True)
+        self.setShowIcon(True)
+        self.setShowIconSeparator(True)
+        self.setIconSeparatorWidth(2)
 
     def __update_stylesheet(self):
         """Update the stylesheet of the toast"""
