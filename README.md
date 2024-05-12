@@ -1,8 +1,10 @@
 # PyQt Toast
 
-[![PyPI](https://img.shields.io/badge/pypi-v1.1.0-blue)](https://pypi.org/project/pyqt-toast-notification/)
-[![Python](https://img.shields.io/badge/python-3.7+-blue)](https://github.com/niklashenning/pyqt-toast)
-[![License](https://img.shields.io/badge/license-MIT-green)](https://github.com/niklashenning/pyqt-toast/blob/master/LICENSE)
+[![PyPI](https://img.shields.io/badge/pypi-v1.2.0-blue)](https://pypi.org/project/pyqt-toast-notification/)
+[![Python](https://img.shields.io/badge/python-3.7+-blue)](https://github.com/niklashenning/pyqttoast)
+[![Build](https://img.shields.io/badge/build-passing-neon)](https://github.com/niklashenning/pyqttoast)
+[![Coverage](https://img.shields.io/badge/coverage-95%25-green)](https://github.com/niklashenning/pyqttoast)
+[![License](https://img.shields.io/badge/license-MIT-green)](https://github.com/niklashenning/pyqttoast/blob/master/LICENSE)
 
 A fully customizable and modern toast notification library for PyQt and PySide
 
@@ -107,6 +109,11 @@ toast.setIcon(QPixmap('path/to/your/icon.png'))
 toast.setIconSize(QSize(14, 14))  # Default: QSize(18, 18)
 ```
 
+* **Enabling or disabling the icon separator:**
+```python
+toast.setShowIconSeparator(False)  # Default: True
+```
+
 * **Setting the close button alignment:**
 ```python
 toast.setCloseButtonAlignment(ToastButtonAlignment.MIDDLE)  # Default: ToastButtonAlignment.TOP
@@ -182,6 +189,8 @@ toast.setFixedSize(QSize(350, 80))
 
 | Option                     | Description                                                                     | Default                    |
 |----------------------------|---------------------------------------------------------------------------------|----------------------------|
+| `setFixedScreen()`         | Fixed screen where the toasts will be shown (static)                            | `None`                     |
+| `setIconSeparatorWidth()`  | Width of the icon separator that separates the icon and text section            | `2`                        |
 | `setCloseButtonIcon()`     | Icon of the close button                                                        | `ToastIcon.CLOSE`          |
 | `setCloseButtonIconSize()` | Size of the close button icon                                                   | `QSize(10, 10)`            |
 | `setCloseButtonSize()`     | Size of the close button                                                        | `QSize(24, 24)`            |
@@ -198,5 +207,17 @@ https://github.com/niklashenning/pyqt-toast/assets/58544929/f4d7f4a4-6d69-4087-a
 
 The demos for PyQt5, PyQt6, and PySide6 can be found in the [demo](demo) folder.
 
+## Tests
+Installing the required test dependencies [PyQt6](https://pypi.org/project/PyQt6/), [pytest](https://github.com/pytest-dev/pytest), and [coveragepy](https://github.com/nedbat/coveragepy):
+```
+pip install PyQt6 pytest coverage
+```
+
+To run the tests with coverage, clone this repository, go into the main directory and run:
+```
+coverage run -m pytest
+coverage report --ignore-errors -m
+```
+
 ## License
-This software is licensed under the [MIT license](https://github.com/niklashenning/pyqt-toast/blob/master/LICENSE).
+This software is licensed under the [MIT license](https://github.com/niklashenning/pyqttoast/blob/master/LICENSE).
