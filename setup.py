@@ -23,7 +23,7 @@ setup(
     description='A fully customizable toast notification library for PyQt and PySide',
     long_description=readme,
     long_description_content_type='text/markdown',
-    url='https://github.com/niklashenning/pyqt-toast',
+    url='https://github.com/niklashenning/pyqttoast',
     keywords=['python', 'pyqt', 'qt', 'toast', 'notification'],
     classifiers=[
         'Programming Language :: Python :: 3',
