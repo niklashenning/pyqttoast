@@ -1,6 +1,6 @@
 import math
 import os
-from qtpy.QtGui import QGuiApplication
+from qtpy.QtGui import QGuiApplication, QScreen
 from qtpy.QtCore import Qt, QPropertyAnimation, QPoint, QTimer, QSize, QMargins, QRect, Signal
 from qtpy.QtGui import QPixmap, QIcon, QColor, QFont, QImage, qRgba, QFontMetrics
 from qtpy.QtWidgets import QDialog, QPushButton, QLabel, QGraphicsOpacityEffect, QWidget
@@ -15,6 +15,7 @@ class Toast(QDialog):
     __offset_x = 20
     __offset_y = 45
     __always_on_main_screen = False
+    __fixed_screen = None
     __position = ToastPosition.BOTTOM_RIGHT
 
     __currently_shown = []
@@ -43,7 +44,7 @@ class Toast(QDialog):
     # Close event
     closed = Signal()
 
-    def __init__(self, parent):
+    def __init__(self, parent: QWidget = None):
         """Create a new Toast instance
 
         :param parent: the parent widget
@@ -59,6 +60,8 @@ class Toast(QDialog):
         self.__icon = self.__get_icon_from_enum(ToastIcon.INFORMATION)
         self.__show_icon = False
         self.__icon_size = QSize(18, 18)
+        self.__show_icon_separator = True
+        self.__icon_separator_width = 2
         self.__close_button_icon = self.__get_icon_from_enum(ToastIcon.CLOSE)
         self.__show_close_button = True
         self.__close_button_icon_size = QSize(10, 10)
@@ -76,13 +79,8 @@ class Toast(QDialog):
         self.__icon_separator_color = Toast.__DEFAULT_ICON_SEPARATOR_COLOR
         self.__close_button_icon_color = Toast.__DEFAULT_CLOSE_BUTTON_ICON_COLOR
         self.__duration_bar_color = Toast.__DEFAULT_ACCENT_COLOR
-        self.__title_font = QFont()
-        self.__title_font.setFamily('Arial')
-        self.__title_font.setPointSize(9)
-        self.__title_font.setBold(True)
-        self.__text_font = QFont()
-        self.__text_font.setFamily('Arial')
-        self.__text_font.setPointSize(9)
+        self.__title_font = QFont('Arial', 9, QFont.Weight.Bold)
+        self.__text_font = QFont('Arial', 9)
         self.__margins = QMargins(20, 18, 10, 18)
         self.__icon_margins = QMargins(0, 0, 15, 0)
         self.__icon_section_margins = QMargins(0, 0, 15, 0)
@@ -95,9 +93,6 @@ class Toast(QDialog):
         self.__used = False
 
         # Window settings
-        self.setWindowFlags(Qt.WindowType.Window |
-                            Qt.WindowType.CustomizeWindowHint |
-                            Qt.WindowType.FramelessWindowHint)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         self.setFocusPolicy(Qt.FocusPolicy.NoFocus)
 
@@ -143,7 +138,6 @@ class Toast(QDialog):
 
         # Icon separator
         self.__icon_separator = QWidget(self.__notification)
-        self.__icon_separator.setFixedWidth(2)
 
         # Duration bar container (used to make border radius possible on 4 px high widget)
         self.__duration_bar_container = QWidget(self.__notification)
@@ -160,10 +154,11 @@ class Toast(QDialog):
         self.__duration_bar_chunk.setFixedHeight(20)
         self.__duration_bar_chunk.move(0, -16)
 
-        # Set default colors
+        # Set defaults
         self.setIcon(self.__icon)
         self.setIconSize(self.__icon_size)
         self.setIconColor(self.__icon_color)
+        self.setIconSeparatorWidth(self.__icon_separator_width)
         self.setCloseButtonIcon(self.__close_button_icon)
         self.setCloseButtonIconSize(self.__close_button_icon_size)
         self.setCloseButtonSize(self.__close_button_size)
@@ -313,7 +308,8 @@ class Toast(QDialog):
             self.fade_in_animation.start()
 
             # Make sure title bar of parent is not grayed out
-            self.parent().activateWindow()
+            if self.parent() is not None:
+                self.parent().activateWindow()
 
             # Update every other currently shown notification
             for n in Toast.__currently_shown:
@@ -428,7 +424,9 @@ class Toast(QDialog):
         primary_screen = QGuiApplication.primaryScreen()
         current_screen = None
 
-        if Toast.__always_on_main_screen:
+        if Toast.__fixed_screen is not None:
+            current_screen = Toast.__fixed_screen
+        elif Toast.__always_on_main_screen or self.parent() is None:
             current_screen = primary_screen
         else:
             screens = QGuiApplication.screens()
@@ -448,20 +446,20 @@ class Toast(QDialog):
             x = (current_screen.geometry().width() - self.__notification.width()
                  - Toast.__offset_x + current_screen.geometry().x())
             y = (current_screen.geometry().height()
-                 - Toast.__currently_shown[0].__notification.height()
+                 - self.__notification.height()
                  - Toast.__offset_y + current_screen.geometry().y() - y_offset)
 
         elif Toast.__position == ToastPosition.BOTTOM_LEFT:
             x = current_screen.geometry().x() + Toast.__offset_x
             y = (current_screen.geometry().height()
-                 - Toast.__currently_shown[0].__notification.height()
+                 - self.__notification.height()
                  - Toast.__offset_y + current_screen.geometry().y() - y_offset)
 
         elif Toast.__position == ToastPosition.BOTTOM_MIDDLE:
             x = (current_screen.geometry().x()
                  + current_screen.geometry().width() / 2 - self.__notification.width() / 2)
             y = (current_screen.geometry().height()
-                 - Toast.__currently_shown[0].__notification.height()
+                 - self.__notification.height()
                  - Toast.__offset_y + current_screen.geometry().y() - y_offset)
 
         elif Toast.__position == ToastPosition.TOP_RIGHT:
@@ -559,11 +557,11 @@ class Toast(QDialog):
         if width > self.maximumWidth():
             # Enable line break for title and text and recalculate size
 
-            new_title_width = title_width - (width - self.maximumWidth())
+            new_title_width = max(title_width, text_width) - (width - self.maximumWidth())
             if new_title_width > 0:
                 title_width = new_title_width
 
-            new_text_width = text_width - (width - self.maximumWidth())
+            new_text_width = max(title_width, text_width) - (width - self.maximumWidth())
             if new_text_width > 0:
                 text_width = new_text_width
 
@@ -736,9 +734,6 @@ class Toast(QDialog):
                                        + math.ceil(forced_additional_height / 2)
                                        - math.floor(forced_reduced_height / 2))
 
-            # Show icon section
-            self.__icon_widget.setVisible(True)
-            self.__icon_separator.setVisible(True)
         else:
             # Hide icon section
             self.__icon_widget.setVisible(False)
@@ -751,8 +746,8 @@ class Toast(QDialog):
                                                  - text_section_height)
 
         # Resize title and text labels
-        self.__title_label.setFixedSize(title_width, title_height)
-        self.__text_label.setFixedSize(text_width, text_height)
+        self.__title_label.setFixedSize(max(title_width, text_width), title_height)
+        self.__text_label.setFixedSize(max(title_width, text_width), text_height)
 
         # Move title and text labels
         if self.__show_icon:
@@ -761,6 +756,7 @@ class Toast(QDialog):
                                     + self.__icon_margins.left()
                                     + self.__icon_widget.width()
                                     + self.__icon_margins.right()
+                                    + self.__icon_separator.width()
                                     + self.__icon_section_margins.right()
                                     + self.__text_section_margins.left(),
                                     self.__margins.top()
@@ -774,6 +770,7 @@ class Toast(QDialog):
                                    + self.__icon_margins.left()
                                    + self.__icon_widget.width()
                                    + self.__icon_margins.right()
+                                   + self.__icon_separator.width()
                                    + self.__icon_section_margins.right()
                                    + self.__text_section_margins.left(),
                                    self.__margins.top()
@@ -979,6 +976,50 @@ class Toast(QDialog):
         self.__icon_widget.setFixedSize(size)
         self.__icon_widget.setIconSize(size)
         self.setIcon(self.__icon)
+
+    def isShowIconSeparator(self) -> bool:
+        """Get whether the icon separator is enabled
+
+        :return: whether the icon separator is enabled
+        """
+
+        return self.__show_icon_separator
+
+    def setShowIconSeparator(self, on: bool):
+        """Set whether the icon separator should be shown
+
+        :param on: whether the icon separator should be shown
+        """
+
+        if self.__used:
+            return
+        self.__show_icon_separator = on
+
+        if on:
+            self.__icon_separator.setFixedWidth(self.__icon_separator_width)
+        else:
+            self.__icon_separator.setFixedWidth(0)
+
+    def getIconSeparatorWidth(self) -> int:
+        """Get the width of the icon separator
+
+        :return: width
+        """
+
+        return self.__icon_separator_width
+
+    def setIconSeparatorWidth(self, width: int):
+        """Set the width of the icon separator
+
+        :param width: new width
+        """
+
+        if self.__used:
+            return
+        self.__icon_separator_width = width
+
+        if self.__show_icon_separator:
+            self.__icon_separator.setFixedWidth(width)
 
     def getCloseButtonIcon(self) -> QPixmap:
         """Get the icon of the close button
@@ -1195,14 +1236,25 @@ class Toast(QDialog):
         self.__stay_on_top = on
 
         if on:
-            self.setWindowFlags(Qt.WindowType.Window |
-                                Qt.WindowType.CustomizeWindowHint |
-                                Qt.WindowType.FramelessWindowHint |
-                                Qt.WindowType.WindowStaysOnTopHint)
+            if self.parent() is not None:
+                self.setWindowFlags(Qt.WindowType.Window |
+                                    Qt.WindowType.CustomizeWindowHint |
+                                    Qt.WindowType.FramelessWindowHint |
+                                    Qt.WindowType.WindowStaysOnTopHint)
+            else:
+                self.setWindowFlags(Qt.WindowType.Tool |
+                                    Qt.WindowType.CustomizeWindowHint |
+                                    Qt.WindowType.FramelessWindowHint |
+                                    Qt.WindowType.WindowStaysOnTopHint)
         else:
-            self.setWindowFlags(Qt.WindowType.Window |
-                                Qt.WindowType.CustomizeWindowHint |
-                                Qt.WindowType.FramelessWindowHint)
+            if self.parent() is not None:
+                self.setWindowFlags(Qt.WindowType.Window |
+                                    Qt.WindowType.CustomizeWindowHint |
+                                    Qt.WindowType.FramelessWindowHint)
+            else:
+                self.setWindowFlags(Qt.WindowType.Tool |
+                                    Qt.WindowType.CustomizeWindowHint |
+                                    Qt.WindowType.FramelessWindowHint)
 
     def getBorderRadius(self) -> int:
         """Get the border radius of the toast
@@ -1899,9 +1951,7 @@ class Toast(QDialog):
                 or preset == ToastPreset.INFORMATION):
             self.setBackgroundColor(Toast.__DEFAULT_BACKGROUND_COLOR)
             self.setCloseButtonIconColor(Toast.__DEFAULT_CLOSE_BUTTON_ICON_COLOR)
-            self.__show_icon = True
             self.setIconSeparatorColor(Toast.__DEFAULT_ICON_SEPARATOR_COLOR)
-            self.setShowDurationBar(True)
             self.setTitleColor(Toast.__DEFAULT_TITLE_COLOR)
             self.setTextColor(Toast.__DEFAULT_TEXT_COLOR)
 
@@ -1911,11 +1961,14 @@ class Toast(QDialog):
                 or preset == ToastPreset.INFORMATION_DARK):
             self.setBackgroundColor(Toast.__DEFAULT_BACKGROUND_COLOR_DARK)
             self.setCloseButtonIconColor(Toast.__DEFAULT_CLOSE_BUTTON_ICON_COLOR_DARK)
-            self.__show_icon = True
             self.setIconSeparatorColor(Toast.__DEFAULT_ICON_SEPARATOR_COLOR_DARK)
-            self.setShowDurationBar(True)
             self.setTitleColor(Toast.__DEFAULT_TITLE_COLOR_DARK)
             self.setTextColor(Toast.__DEFAULT_TEXT_COLOR_DARK)
+
+        self.setShowDurationBar(True)
+        self.setShowIcon(True)
+        self.setShowIconSeparator(True)
+        self.setIconSeparatorWidth(2)
 
     def __update_stylesheet(self):
         """Update the stylesheet of the toast"""
@@ -2151,6 +2204,25 @@ class Toast(QDialog):
         Toast.__update_currently_showing_position_xy()
 
     @staticmethod
+    def getFixedScreen() -> QScreen | None:
+        """Get the fixed screen where the toasts are shown
+
+        :return: screen if fixed screen is set, else None
+        """
+
+        return Toast.__fixed_screen
+
+    @staticmethod
+    def setFixedScreen(screen: QScreen | None):
+        """Set a fixed screen where the toasts will be shown
+
+        :param screen: fixed screen (or None to unset)
+        """
+
+        Toast.__fixed_screen = screen
+        Toast.__update_currently_showing_position_xy()
+
+    @staticmethod
     def getPosition() -> ToastPosition:
         """Get the position where the toasts are shown
 
@@ -2161,7 +2233,7 @@ class Toast(QDialog):
 
     @staticmethod
     def setPosition(position: ToastPosition):
-        """Set the position where the toasts are shown
+        """Set the position where the toasts will be shown
 
         :param position: new position
         """
@@ -2203,3 +2275,25 @@ class Toast(QDialog):
         """
 
         return len(Toast.__queue)
+
+    @staticmethod
+    def reset():
+        """Reset the Toast class completely (reset static attributes
+         to defaults, hide all toasts instantly, and clear queue)"""
+
+        # Reset static attributes
+        Toast.__maximum_on_screen = 3
+        Toast.__spacing = 10
+        Toast.__offset_x = 20
+        Toast.__offset_y = 45
+        Toast.__always_on_main_screen = False
+        Toast.__fixed_screen = None
+        Toast.__position = ToastPosition.BOTTOM_RIGHT
+
+        # Hide currently showing toasts and clear queue
+        for toast in Toast.__currently_shown:
+            toast.setVisible(False)
+            toast.deleteLater()
+
+        Toast.__currently_shown.clear()
+        Toast.__queue.clear()
