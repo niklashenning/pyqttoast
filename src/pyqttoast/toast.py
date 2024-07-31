@@ -181,7 +181,6 @@ class Toast(QDialog):
 
         # Timer for updating the duration bar
         self.__duration_bar_timer = QTimer(self)
-        self.__duration_timer.setSingleShot(True)
         self.__duration_bar_timer.timeout.connect(self.__update_duration_bar)
 
         # Apply stylesheet
@@ -312,8 +311,8 @@ class Toast(QDialog):
                 self.parent().activateWindow()
 
             # Update every other currently shown notification
-            for n in Toast.__currently_shown:
-                n.__update_position_xy()
+            for toast in Toast.__currently_shown:
+                toast.__update_position_xy()
         else:
             # Add notification to queue instead
             Toast.__queue.append(self)
@@ -415,10 +414,10 @@ class Toast(QDialog):
 
         # Calculate vertical space taken up by all the currently showing notifications
         y_offset = 0
-        for n in Toast.__currently_shown:
-            if n == self:
+        for toast in Toast.__currently_shown:
+            if toast == self:
                 break
-            y_offset += n.__notification.height() + Toast.__spacing
+            y_offset += toast.__notification.height() + Toast.__spacing
 
         # Get screen
         primary_screen = QGuiApplication.primaryScreen()
@@ -556,7 +555,6 @@ class Toast(QDialog):
         # Handle width greater than maximum width
         if width > self.maximumWidth():
             # Enable line break for title and text and recalculate size
-
             new_title_width = max(title_width, text_width) - (width - self.maximumWidth())
             if new_title_width > 0:
                 title_width = new_title_width
@@ -1157,11 +1155,7 @@ class Toast(QDialog):
 
         if self.__used:
             return
-
-        if (alignment == ToastButtonAlignment.TOP
-                or alignment == ToastButtonAlignment.MIDDLE
-                or alignment == ToastButtonAlignment.BOTTOM):
-            self.__close_button_alignment = alignment
+        self.__close_button_alignment = alignment
 
     def getFadeInDuration(self) -> int:
         """Get the fade in duration of the toast

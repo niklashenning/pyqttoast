@@ -117,7 +117,6 @@ class Window(QMainWindow):
         self.border_radius_spinbox.setFixedHeight(24)
 
         self.show_icon_checkbox = QCheckBox('Show icon')
-        self.show_icon_checkbox.setChecked(False)
 
         self.icon_dropdown = QComboBox()
         self.icon_dropdown.addItems(['SUCCESS', 'WARNING', 'ERROR',
