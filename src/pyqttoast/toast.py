@@ -700,11 +700,12 @@ class Toast(QDialog):
                                  Toast.__DROP_SHADOW_SIZE)
         self.__notification.raise_()
 
-        # Calculate difference between height and height of icon section
-        height_icon_section_height_difference = (max(icon_section_height,
-                                                     text_section_height,
-                                                     close_button_section_height)
-                                                 - icon_section_height)
+        # Calculate max height of all sections
+        max_section_height = max(icon_section_height, text_section_height, close_button_section_height)
+
+        # Calculate difference between height and height of icon section and text section
+        height_icon_section_height_difference = max_section_height - icon_section_height
+        height_text_section_height_difference = max_section_height - text_section_height
 
         if self.__show_icon:
             # Move icon
@@ -727,19 +728,13 @@ class Toast(QDialog):
                                        + self.__icon_margins.right(),
                                        self.__margins.top()
                                        + self.__icon_section_margins.top()
+                                       + math.ceil(height_text_section_height_difference / 2)
                                        + math.ceil(forced_additional_height / 2)
                                        - math.floor(forced_reduced_height / 2))
-
         else:
             # Hide icon section
             self.__icon_widget.setVisible(False)
             self.__icon_separator.setVisible(False)
-
-        # Calculate difference between height and height of text section
-        height_text_section_height_difference = (max(icon_section_height,
-                                                     text_section_height,
-                                                     close_button_section_height)
-                                                 - text_section_height)
 
         # Resize title and text labels
         self.__title_label.setFixedSize(max(title_width, text_width), title_height)
