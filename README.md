@@ -8,7 +8,7 @@
 
 A fully customizable and modern toast notification library for PyQt and PySide
 
-![pyqt-toast](https://github.com/niklashenning/pyqt-toast/assets/58544929/c104f10e-08df-4665-98d8-3785822a20dc)
+![pyqttoast](https://github.com/niklashenning/pyqt-toast/assets/58544929/c104f10e-08df-4665-98d8-3785822a20dc)
 
 ## Features
 * Supports showing multiple toasts at the same time
@@ -97,12 +97,13 @@ toast.setShowDurationBar(False)  # Default: True
 * **Adding an icon:**
 ```python
 toast.setIcon(ToastIcon.SUCCESS)  # Default: ToastIcon.INFORMATION
-toast.setShowIcon(True)
+toast.setShowIcon(True)           # Default: False
 
 # Or setting a custom icon:
 toast.setIcon(QPixmap('path/to/your/icon.png'))
 ```
 > **AVAILABLE ICONS:** <br> `SUCCESS`, `WARNING`, `ERROR`, `INFORMATION`, `CLOSE`
+
 
 * **Setting the icon size:**
 ```python
@@ -156,14 +157,11 @@ toast.setCloseButtonIconColor(QColor('#C9C9C9'))  # Default: #000000
 * **Setting custom fonts:**
 ```python
 # Init font
-font = QFont()
-font.setFamily('Times')
-font.setPointSize(10)
-font.setBold(True)
+font = QFont('Times', 10, QFont.Weight.Bold)
 
 # Set fonts
-toast.setTitleFont(font)
-toast.setTextFont(font)
+toast.setTitleFont(font)  # Default: QFont('Arial', 9, QFont.Weight.Bold)
+toast.setTextFont(font)   # Default: QFont('Arial', 9)
 ```
 
 * **Applying a style preset:**
