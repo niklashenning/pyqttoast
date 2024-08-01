@@ -306,10 +306,6 @@ class Toast(QDialog):
             self.fade_in_animation.setEndValue(1)
             self.fade_in_animation.start()
 
-            # Make sure title bar of parent is not grayed out
-            if self.parent() is not None:
-                self.parent().activateWindow()
-
             # Update every other currently shown notification
             for toast in Toast.__currently_shown:
                 toast.__update_position_xy()
@@ -1227,25 +1223,14 @@ class Toast(QDialog):
         self.__stay_on_top = on
 
         if on:
-            if self.parent() is not None:
-                self.setWindowFlags(Qt.WindowType.Window |
-                                    Qt.WindowType.CustomizeWindowHint |
-                                    Qt.WindowType.FramelessWindowHint |
-                                    Qt.WindowType.WindowStaysOnTopHint)
-            else:
-                self.setWindowFlags(Qt.WindowType.Tool |
-                                    Qt.WindowType.CustomizeWindowHint |
-                                    Qt.WindowType.FramelessWindowHint |
-                                    Qt.WindowType.WindowStaysOnTopHint)
+            self.setWindowFlags(Qt.WindowType.Tool |
+                                Qt.WindowType.CustomizeWindowHint |
+                                Qt.WindowType.FramelessWindowHint |
+                                Qt.WindowType.WindowStaysOnTopHint)
         else:
-            if self.parent() is not None:
-                self.setWindowFlags(Qt.WindowType.Window |
-                                    Qt.WindowType.CustomizeWindowHint |
-                                    Qt.WindowType.FramelessWindowHint)
-            else:
-                self.setWindowFlags(Qt.WindowType.Tool |
-                                    Qt.WindowType.CustomizeWindowHint |
-                                    Qt.WindowType.FramelessWindowHint)
+            self.setWindowFlags(Qt.WindowType.Tool |
+                                Qt.WindowType.CustomizeWindowHint |
+                                Qt.WindowType.FramelessWindowHint)
 
     def getBorderRadius(self) -> int:
         """Get the border radius of the toast
