@@ -402,23 +402,17 @@ class Toast(QDialog):
         self.pos_animation.setDuration(Toast.__UPDATE_POSITION_DURATION)
         self.pos_animation.start()
 
-    def __calculate_position(self):
-        """Calculate x and y position of the toast
+    def __get_bounds(self) -> QRect:
+        """Get the bounds (QRect) of the target screen
 
-        :return: x and y position
+        :return: rect of the target screen
         """
 
-        # Calculate vertical space taken up by all the currently showing notifications
-        y_offset = 0
-        for toast in Toast.__currently_shown:
-            if toast == self:
-                break
-            y_offset += toast.__notification.height() + Toast.__spacing
-
-        # Get screen
+        # Get primary screen
         primary_screen = QGuiApplication.primaryScreen()
         current_screen = None
 
+        # Calculate target screen
         if Toast.__fixed_screen is not None:
             current_screen = Toast.__fixed_screen
         elif Toast.__always_on_main_screen or self.parent() is None:
@@ -433,56 +427,67 @@ class Toast(QDialog):
                         current_screen = primary_screen
                         break
 
+        return current_screen.geometry()
+
+    def __calculate_position(self):
+        """Calculate x and y position of the toast
+
+        :return: x and y position
+        """
+
+        # Calculate vertical space taken up by all the currently showing notifications
+        y_offset = 0
+        for toast in Toast.__currently_shown:
+            if toast == self:
+                break
+            y_offset += toast.__notification.height() + Toast.__spacing
+
         # Calculate x and y position of notification
         x = 0
         y = 0
+        bounds = self.__get_bounds()
 
         if Toast.__position == ToastPosition.BOTTOM_RIGHT:
-            x = (current_screen.geometry().width() - self.__notification.width()
-                 - Toast.__offset_x + current_screen.geometry().x())
-            y = (current_screen.geometry().height()
-                 - self.__notification.height()
-                 - Toast.__offset_y + current_screen.geometry().y() - y_offset)
+            x = (bounds.width() - self.__notification.width()
+                 - Toast.__offset_x + bounds.x())
+            y = (bounds.height() - self.__notification.height()
+                 - Toast.__offset_y + bounds.y() - y_offset)
 
         elif Toast.__position == ToastPosition.BOTTOM_LEFT:
-            x = current_screen.geometry().x() + Toast.__offset_x
-            y = (current_screen.geometry().height()
-                 - self.__notification.height()
-                 - Toast.__offset_y + current_screen.geometry().y() - y_offset)
+            x = bounds.x() + Toast.__offset_x
+            y = (bounds.height() - self.__notification.height()
+                 - Toast.__offset_y + bounds.y() - y_offset)
 
         elif Toast.__position == ToastPosition.BOTTOM_MIDDLE:
-            x = (current_screen.geometry().x()
-                 + current_screen.geometry().width() / 2 - self.__notification.width() / 2)
-            y = (current_screen.geometry().height()
-                 - self.__notification.height()
-                 - Toast.__offset_y + current_screen.geometry().y() - y_offset)
+            x = (bounds.x() + bounds.width() / 2
+                 - self.__notification.width() / 2)
+            y = (bounds.height() - self.__notification.height()
+                 - Toast.__offset_y + bounds.y() - y_offset)
 
         elif Toast.__position == ToastPosition.TOP_RIGHT:
-            x = (current_screen.geometry().width() - self.__notification.width()
-                 - Toast.__offset_x + current_screen.geometry().x())
-            y = (current_screen.geometry().y()
-                 + Toast.__offset_y + y_offset)
+            x = (bounds.width() - self.__notification.width()
+                 - Toast.__offset_x + bounds.x())
+            y = (bounds.y() + Toast.__offset_y + y_offset)
 
         elif Toast.__position == ToastPosition.TOP_LEFT:
-            x = current_screen.geometry().x() + Toast.__offset_x
-            y = (current_screen.geometry().y()
-                 + Toast.__offset_y + y_offset)
+            x = bounds.x() + Toast.__offset_x
+            y = (bounds.y() + Toast.__offset_y + y_offset)
 
         elif Toast.__position == ToastPosition.TOP_MIDDLE:
-            x = (current_screen.geometry().x()
-                 + current_screen.geometry().width() / 2
+            x = (bounds.x() + bounds.width() / 2
                  - self.__notification.width() / 2)
-            y = (current_screen.geometry().y()
-                 + Toast.__offset_y + y_offset)
+            y = (bounds.y() + Toast.__offset_y + y_offset)
 
         elif Toast.__position == ToastPosition.CENTER:
-            x = (current_screen.geometry().x()
-                 + current_screen.geometry().width() / 2
+            x = (bounds.x() + bounds.width() / 2
                  - self.__notification.width() / 2)
-            y = (current_screen.geometry().y()
-                 + current_screen.geometry().height() / 2
-                 - self.__notification.height() / 2
-                 + y_offset)
+            if y_offset == 0:
+                y = (bounds.y() + bounds.height() / 2
+                     - self.__notification.height() / 2 + y_offset)
+            else:
+                y_start = (bounds.y() + bounds.height() / 2
+                           - self.__currently_shown[0].__notification.height() / 2)
+                y = y_start + y_offset
 
         x = int(x - Toast.__DROP_SHADOW_SIZE)
         y = int(y - Toast.__DROP_SHADOW_SIZE)
