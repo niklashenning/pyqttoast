@@ -321,9 +321,9 @@ class Toast(QDialog):
         """Start hiding process of the toast notification"""
 
         if not self.__fading_out:
+            self.__fading_out = True
             if self.__duration != 0:
                 self.__duration_timer.stop()
-                self.__fading_out = True
             self.__fade_out()
 
     def __fade_out(self):
@@ -555,13 +555,10 @@ class Toast(QDialog):
         # Handle width greater than maximum width
         if width > self.maximumWidth():
             # Enable line break for title and text and recalculate size
-            new_title_width = max(title_width, text_width) - (width - self.maximumWidth())
-            if new_title_width > 0:
-                title_width = new_title_width
-
-            new_text_width = max(title_width, text_width) - (width - self.maximumWidth())
-            if new_text_width > 0:
-                text_width = new_text_width
+            new_title_text_width = max(title_width, text_width) - (width - self.maximumWidth())
+            if new_title_text_width > 0:
+                title_width = new_title_text_width
+                text_width = new_title_text_width
 
             self.__title_label.setMinimumWidth(title_width)
             self.__title_label.setWordWrap(True)
