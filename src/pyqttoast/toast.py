@@ -5,6 +5,7 @@ from qtpy.QtCore import Qt, QPropertyAnimation, QPoint, QTimer, QSize, QMargins,
 from qtpy.QtGui import QPixmap, QIcon, QColor, QFont, QImage, qRgba, QFontMetrics
 from qtpy.QtWidgets import QDialog, QPushButton, QLabel, QGraphicsOpacityEffect, QWidget
 from .toast_enums import ToastPreset, ToastIcon, ToastPosition, ToastButtonAlignment
+from .constants import *
 
 
 class Toast(QDialog):
@@ -22,26 +23,6 @@ class Toast(QDialog):
 
     __currently_shown = []
     __queue = []
-
-    # Constants
-    __UPDATE_POSITION_DURATION = 200
-    __DURATION_BAR_UPDATE_INTERVAL = 1
-    __DROP_SHADOW_SIZE = 5
-    __SUCCESS_ACCENT_COLOR = QColor('#3E9141')
-    __WARNING_ACCENT_COLOR = QColor('#E8B849')
-    __ERROR_ACCENT_COLOR = QColor('#BA2626')
-    __INFORMATION_ACCENT_COLOR = QColor('#007FFF')
-    __DEFAULT_ACCENT_COLOR = QColor('#5C5C5C')
-    __DEFAULT_BACKGROUND_COLOR = QColor('#E7F4F9')
-    __DEFAULT_TITLE_COLOR = QColor('#000000')
-    __DEFAULT_TEXT_COLOR = QColor('#5C5C5C')
-    __DEFAULT_ICON_SEPARATOR_COLOR = QColor('#D9D9D9')
-    __DEFAULT_CLOSE_BUTTON_ICON_COLOR = QColor('#000000')
-    __DEFAULT_BACKGROUND_COLOR_DARK = QColor('#292929')
-    __DEFAULT_TITLE_COLOR_DARK = QColor('#FFFFFF')
-    __DEFAULT_TEXT_COLOR_DARK = QColor('#D0D0D0')
-    __DEFAULT_ICON_SEPARATOR_COLOR_DARK = QColor('#585858')
-    __DEFAULT_CLOSE_BUTTON_ICON_COLOR_DARK = QColor('#C9C9C9')
 
     # Close event
     closed = Signal()
@@ -74,13 +55,13 @@ class Toast(QDialog):
         self.__reset_duration_on_hover = True
         self.__stay_on_top = True
         self.__border_radius = 0
-        self.__background_color = Toast.__DEFAULT_BACKGROUND_COLOR
-        self.__title_color = Toast.__DEFAULT_TITLE_COLOR
-        self.__text_color = Toast.__DEFAULT_TEXT_COLOR
-        self.__icon_color = Toast.__DEFAULT_ACCENT_COLOR
-        self.__icon_separator_color = Toast.__DEFAULT_ICON_SEPARATOR_COLOR
-        self.__close_button_icon_color = Toast.__DEFAULT_CLOSE_BUTTON_ICON_COLOR
-        self.__duration_bar_color = Toast.__DEFAULT_ACCENT_COLOR
+        self.__background_color = DEFAULT_BACKGROUND_COLOR
+        self.__title_color = DEFAULT_TITLE_COLOR
+        self.__text_color = DEFAULT_TEXT_COLOR
+        self.__icon_color = DEFAULT_ACCENT_COLOR
+        self.__icon_separator_color = DEFAULT_ICON_SEPARATOR_COLOR
+        self.__close_button_icon_color = DEFAULT_CLOSE_BUTTON_ICON_COLOR
+        self.__duration_bar_color = DEFAULT_ACCENT_COLOR
         self.__title_font = QFont('Arial', 9, QFont.Weight.Bold)
         self.__text_font = QFont('Arial', 9)
         self.__margins = QMargins(20, 18, 10, 18)
@@ -232,7 +213,7 @@ class Toast(QDialog):
 
             # Restart duration bar animation if enabled
             if self.__show_duration_bar:
-                self.__duration_bar_timer.start(Toast.__DURATION_BAR_UPDATE_INTERVAL)
+                self.__duration_bar_timer.start(DURATION_BAR_UPDATE_INTERVAL)
 
     def show(self):
         """Show the toast notification"""
@@ -255,7 +236,7 @@ class Toast(QDialog):
 
             # Start duration bar update timer
             if self.__duration != 0 and self.__show_duration_bar:
-                self.__duration_bar_timer.start(Toast.__DURATION_BAR_UPDATE_INTERVAL)
+                self.__duration_bar_timer.start(DURATION_BAR_UPDATE_INTERVAL)
 
             # Calculate position and show (animate position too if not first notification)
             x, y = self.__calculate_position()
@@ -347,7 +328,7 @@ class Toast(QDialog):
     def __update_duration_bar(self):
         """Update the duration bar chunk with the elapsed time"""
 
-        self.__elapsed_time += Toast.__DURATION_BAR_UPDATE_INTERVAL
+        self.__elapsed_time += DURATION_BAR_UPDATE_INTERVAL
 
         if self.__elapsed_time >= self.__duration:
             self.__duration_bar_timer.stop()
@@ -371,7 +352,7 @@ class Toast(QDialog):
             # Animate position change
             self.pos_animation = QPropertyAnimation(self, b"pos")
             self.pos_animation.setEndValue(position)
-            self.pos_animation.setDuration(Toast.__UPDATE_POSITION_DURATION)
+            self.pos_animation.setDuration(UPDATE_POSITION_DURATION)
             self.pos_animation.start()
         else:
             self.move(position)
@@ -389,7 +370,7 @@ class Toast(QDialog):
             # Animate position change
             self.pos_animation = QPropertyAnimation(self, b"pos")
             self.pos_animation.setEndValue(position)
-            self.pos_animation.setDuration(Toast.__UPDATE_POSITION_DURATION)
+            self.pos_animation.setDuration(UPDATE_POSITION_DURATION)
             self.pos_animation.start()
         else:
             self.move(position)
@@ -407,7 +388,7 @@ class Toast(QDialog):
             # Animate position change
             self.pos_animation = QPropertyAnimation(self, b"pos")
             self.pos_animation.setEndValue(position)
-            self.pos_animation.setDuration(Toast.__UPDATE_POSITION_DURATION)
+            self.pos_animation.setDuration(UPDATE_POSITION_DURATION)
             self.pos_animation.start()
         else:
             self.move(position)
@@ -501,8 +482,8 @@ class Toast(QDialog):
                            - self.__currently_shown[0].__notification.height() / 2)
                 y = y_start + y_offset
 
-        x = int(x - Toast.__DROP_SHADOW_SIZE)
-        y = int(y - Toast.__DROP_SHADOW_SIZE)
+        x = int(x - DROP_SHADOW_SIZE)
+        y = int(y - DROP_SHADOW_SIZE)
 
         return x, y
 
@@ -690,8 +671,8 @@ class Toast(QDialog):
             height = self.maximumHeight()
 
         # Calculate width and height including space for drop shadow
-        total_width = width + (Toast.__DROP_SHADOW_SIZE * 2)
-        total_height = height + (Toast.__DROP_SHADOW_SIZE * 2)
+        total_width = width + (DROP_SHADOW_SIZE * 2)
+        total_height = height + (DROP_SHADOW_SIZE * 2)
 
         # Resize drop shadow
         self.__drop_shadow_layer_1.resize(total_width, total_height)
@@ -708,8 +689,7 @@ class Toast(QDialog):
         # Resize window
         super().setFixedSize(total_width, total_height)
         self.__notification.setFixedSize(width, height)
-        self.__notification.move(Toast.__DROP_SHADOW_SIZE,
-                                 Toast.__DROP_SHADOW_SIZE)
+        self.__notification.move(DROP_SHADOW_SIZE, DROP_SHADOW_SIZE)
         self.__notification.raise_()
 
         # Calculate max height of all sections
@@ -1954,43 +1934,43 @@ class Toast(QDialog):
 
         if preset == ToastPreset.SUCCESS or preset == ToastPreset.SUCCESS_DARK:
             self.setIcon(ToastIcon.SUCCESS)
-            self.setIconColor(Toast.__SUCCESS_ACCENT_COLOR)
-            self.setDurationBarColor(Toast.__SUCCESS_ACCENT_COLOR)
+            self.setIconColor(SUCCESS_ACCENT_COLOR)
+            self.setDurationBarColor(SUCCESS_ACCENT_COLOR)
 
         elif preset == ToastPreset.WARNING or preset == ToastPreset.WARNING_DARK:
             self.setIcon(ToastIcon.WARNING)
-            self.setIconColor(Toast.__WARNING_ACCENT_COLOR)
-            self.setDurationBarColor(Toast.__WARNING_ACCENT_COLOR)
+            self.setIconColor(WARNING_ACCENT_COLOR)
+            self.setDurationBarColor(WARNING_ACCENT_COLOR)
 
         elif preset == ToastPreset.ERROR or preset == ToastPreset.ERROR_DARK:
             self.setIcon(ToastIcon.ERROR)
-            self.setIconColor(Toast.__ERROR_ACCENT_COLOR)
-            self.setDurationBarColor(Toast.__ERROR_ACCENT_COLOR)
+            self.setIconColor(ERROR_ACCENT_COLOR)
+            self.setDurationBarColor(ERROR_ACCENT_COLOR)
 
         elif preset == ToastPreset.INFORMATION or preset == ToastPreset.INFORMATION_DARK:
             self.setIcon(ToastIcon.INFORMATION)
-            self.setIconColor(Toast.__INFORMATION_ACCENT_COLOR)
-            self.setDurationBarColor(Toast.__INFORMATION_ACCENT_COLOR)
+            self.setIconColor(INFORMATION_ACCENT_COLOR)
+            self.setDurationBarColor(INFORMATION_ACCENT_COLOR)
 
         if (preset == ToastPreset.SUCCESS
                 or preset == ToastPreset.WARNING
                 or preset == ToastPreset.ERROR
                 or preset == ToastPreset.INFORMATION):
-            self.setBackgroundColor(Toast.__DEFAULT_BACKGROUND_COLOR)
-            self.setCloseButtonIconColor(Toast.__DEFAULT_CLOSE_BUTTON_ICON_COLOR)
-            self.setIconSeparatorColor(Toast.__DEFAULT_ICON_SEPARATOR_COLOR)
-            self.setTitleColor(Toast.__DEFAULT_TITLE_COLOR)
-            self.setTextColor(Toast.__DEFAULT_TEXT_COLOR)
+            self.setBackgroundColor(DEFAULT_BACKGROUND_COLOR)
+            self.setCloseButtonIconColor(DEFAULT_CLOSE_BUTTON_ICON_COLOR)
+            self.setIconSeparatorColor(DEFAULT_ICON_SEPARATOR_COLOR)
+            self.setTitleColor(DEFAULT_TITLE_COLOR)
+            self.setTextColor(DEFAULT_TEXT_COLOR)
 
         elif (preset == ToastPreset.SUCCESS_DARK
                 or preset == ToastPreset.WARNING_DARK
                 or preset == ToastPreset.ERROR_DARK
                 or preset == ToastPreset.INFORMATION_DARK):
-            self.setBackgroundColor(Toast.__DEFAULT_BACKGROUND_COLOR_DARK)
-            self.setCloseButtonIconColor(Toast.__DEFAULT_CLOSE_BUTTON_ICON_COLOR_DARK)
-            self.setIconSeparatorColor(Toast.__DEFAULT_ICON_SEPARATOR_COLOR_DARK)
-            self.setTitleColor(Toast.__DEFAULT_TITLE_COLOR_DARK)
-            self.setTextColor(Toast.__DEFAULT_TEXT_COLOR_DARK)
+            self.setBackgroundColor(DEFAULT_BACKGROUND_COLOR_DARK)
+            self.setCloseButtonIconColor(DEFAULT_CLOSE_BUTTON_ICON_COLOR_DARK)
+            self.setIconSeparatorColor(DEFAULT_ICON_SEPARATOR_COLOR_DARK)
+            self.setTitleColor(DEFAULT_TITLE_COLOR_DARK)
+            self.setTextColor(DEFAULT_TEXT_COLOR_DARK)
 
         self.setShowDurationBar(True)
         self.setShowIcon(True)
