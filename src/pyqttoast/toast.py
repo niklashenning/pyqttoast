@@ -14,6 +14,8 @@ class Toast(QDialog):
     __spacing = 10
     __offset_x = 20
     __offset_y = 45
+    __position_relative_to_widget = None
+    __move_position_with_widget = True
     __always_on_main_screen = False
     __fixed_screen = None
     __position = ToastPosition.BOTTOM_RIGHT
@@ -186,6 +188,20 @@ class Toast(QDialog):
         # Apply stylesheet
         self.setStyleSheet(open(self.__get_directory() + '/css/toast_notification.css').read())
 
+        # Install event filter on widget if position relative to widget and moving with widget
+        if Toast.__position_relative_to_widget and Toast.__move_position_with_widget:
+            self.__install_widget_event_filter()
+
+    def eventFilter(self, watched, event):
+        # Event is on widget, position is set to be relative to widget and moving with widget
+        if (Toast.__position_relative_to_widget and watched == Toast.__position_relative_to_widget
+                and Toast.__move_position_with_widget):
+            # If moved or resized, update toast position if shown
+            if event.type() == event.Type.Move or event.type() == event.Type.Resize:
+                if self in Toast.__currently_shown:
+                    self.__update_position_xy(animate=False)
+        return False
+
     def enterEvent(self, event):
         """Event that happens every time the mouse enters this widget.
         If reset_duration_on_hover is enabled, reset the countdown
@@ -217,33 +233,6 @@ class Toast(QDialog):
             # Restart duration bar animation if enabled
             if self.__show_duration_bar:
                 self.__duration_bar_timer.start(Toast.__DURATION_BAR_UPDATE_INTERVAL)
-
-    def setFixedSize(self, size: QSize):
-        """Set a fixed toast size
-
-        :param size: fixed size
-        """
-
-        self.setMinimumSize(size)
-        self.setMaximumSize(size)
-
-    def setFixedWidth(self, width: int):
-        """Set a fixed toast width
-
-        :param width: fixed width
-        """
-
-        self.setMinimumWidth(width)
-        self.setMaximumWidth(width)
-
-    def setFixedHeight(self, height: int):
-        """Set a fixed toast height
-
-        :param height: fixed height
-        """
-
-        self.setMinimumHeight(height)
-        self.setMaximumHeight(height)
 
     def show(self):
         """Show the toast notification"""
@@ -369,51 +358,74 @@ class Toast(QDialog):
                                      * self.__duration_bar_container.width())
         self.__duration_bar_chunk.setFixedWidth(new_chunk_width)
 
-    def __update_position_xy(self):
-        """Update the x and y position of the toast with an animation"""
+    def __update_position_xy(self, animate: bool = True):
+        """Update the x and y position of the toast with an optional animation
+
+        :param animate: whether the position change should be animated
+        """
 
         x, y = self.__calculate_position()
+        position = QPoint(x, y)
 
-        # Animate position change
-        self.pos_animation = QPropertyAnimation(self, b"pos")
-        self.pos_animation.setEndValue(QPoint(x, y))
-        self.pos_animation.setDuration(Toast.__UPDATE_POSITION_DURATION)
-        self.pos_animation.start()
+        if animate:
+            # Animate position change
+            self.pos_animation = QPropertyAnimation(self, b"pos")
+            self.pos_animation.setEndValue(position)
+            self.pos_animation.setDuration(Toast.__UPDATE_POSITION_DURATION)
+            self.pos_animation.start()
+        else:
+            self.move(position)
 
-    def __update_position_x(self):
-        """Update the x position of the toast with an animation"""
+    def __update_position_x(self, animate: bool = True):
+        """Update the x position of the toast with an optional animation
 
-        x, y = self.__calculate_position()
-
-        # Animate position change
-        self.pos_animation = QPropertyAnimation(self, b"pos")
-        self.pos_animation.setEndValue(QPoint(x, self.y()))
-        self.pos_animation.setDuration(Toast.__UPDATE_POSITION_DURATION)
-        self.pos_animation.start()
-
-    def __update_position_y(self):
-        """Update the y position of the toast with an animation"""
+        :param animate: whether the position change should be animated
+        """
 
         x, y = self.__calculate_position()
+        position = QPoint(x, self.y())
 
-        # Animate position change
-        self.pos_animation = QPropertyAnimation(self, b"pos")
-        self.pos_animation.setEndValue(QPoint(self.x(), y))
-        self.pos_animation.setDuration(Toast.__UPDATE_POSITION_DURATION)
-        self.pos_animation.start()
+        if animate:
+            # Animate position change
+            self.pos_animation = QPropertyAnimation(self, b"pos")
+            self.pos_animation.setEndValue(position)
+            self.pos_animation.setDuration(Toast.__UPDATE_POSITION_DURATION)
+            self.pos_animation.start()
+        else:
+            self.move(position)
+
+    def __update_position_y(self, animate: bool = True):
+        """Update the y position of the toast with an optional animation
+
+        :param animate: whether the position change should be animated
+        """
+
+        x, y = self.__calculate_position()
+        position = QPoint(self.x(), y)
+
+        if animate:
+            # Animate position change
+            self.pos_animation = QPropertyAnimation(self, b"pos")
+            self.pos_animation.setEndValue(position)
+            self.pos_animation.setDuration(Toast.__UPDATE_POSITION_DURATION)
+            self.pos_animation.start()
+        else:
+            self.move(position)
 
     def __get_bounds(self) -> QRect:
-        """Get the bounds (QRect) of the target screen
+        """Get the bounds (QRect) of the target screen or widget
 
-        :return: rect of the target screen
+        :return: rect of the target screen or widget
         """
 
         # Get primary screen
         primary_screen = QGuiApplication.primaryScreen()
         current_screen = None
 
-        # Calculate target screen
-        if Toast.__fixed_screen is not None:
+        # Calculate target screen / widget
+        if Toast.__position_relative_to_widget is not None:
+            return Toast.__position_relative_to_widget.geometry()
+        elif Toast.__fixed_screen is not None:
             current_screen = Toast.__fixed_screen
         elif Toast.__always_on_main_screen or self.parent() is None:
             current_screen = primary_screen
@@ -829,6 +841,45 @@ class Toast(QDialog):
             self.__duration_bar_container.setVisible(True)
         else:
             self.__duration_bar_container.setVisible(False)
+
+    def __install_widget_event_filter(self):
+        """Install an event filter on parent"""
+
+        if Toast.__position_relative_to_widget:
+            Toast.__position_relative_to_widget.installEventFilter(self)
+
+    def __remove_widget_event_filter(self):
+        """Remove an installed event filter on parent"""
+
+        if Toast.__position_relative_to_widget:
+            Toast.__position_relative_to_widget.removeEventFilter(self)
+
+    def setFixedSize(self, size: QSize):
+        """Set a fixed toast size
+
+        :param size: fixed size
+        """
+
+        self.setMinimumSize(size)
+        self.setMaximumSize(size)
+
+    def setFixedWidth(self, width: int):
+        """Set a fixed toast width
+
+        :param width: fixed width
+        """
+
+        self.setMinimumWidth(width)
+        self.setMaximumWidth(width)
+
+    def setFixedHeight(self, height: int):
+        """Set a fixed toast height
+
+        :param height: fixed height
+        """
+
+        self.setMinimumHeight(height)
+        self.setMaximumHeight(height)
 
     def getDuration(self) -> int:
         """Get the duration of the toast
@@ -1977,25 +2028,34 @@ class Toast(QDialog):
         self.__text_label.setStyleSheet('color: {};'.format(self.__text_color.name()))
 
     @staticmethod
-    def __update_currently_showing_position_xy():
-        """Update the x and y position of every currently showing toast"""
+    def __update_currently_showing_position_xy(animate: bool = True):
+        """Update the x and y position of every currently showing toast
+
+        :param animate: whether the position change should be animated
+        """
 
         for toast in Toast.__currently_shown:
-            toast.__update_position_xy()
+            toast.__update_position_xy(animate)
 
     @staticmethod
-    def __update_currently_showing_position_x():
-        """Update the x position of every currently showing toast"""
+    def __update_currently_showing_position_x(animate: bool = True):
+        """Update the x position of every currently showing toast
+
+        :param animate: whether the position change should be animated
+        """
 
         for toast in Toast.__currently_shown:
-            toast.__update_position_x()
+            toast.__update_position_x(animate)
 
     @staticmethod
-    def __update_currently_showing_position_y():
-        """Update the y position of every currently showing toast"""
+    def __update_currently_showing_position_y(animate: bool = True):
+        """Update the y position of every currently showing toast
+
+        :param animate: whether the position change should be animated
+        """
 
         for toast in Toast.__currently_shown:
-            toast.__update_position_y()
+            toast.__update_position_y(animate)
 
     @staticmethod
     def __show_next_in_queue():
@@ -2161,6 +2221,63 @@ class Toast(QDialog):
         Toast.__update_currently_showing_position_xy()
 
     @staticmethod
+    def isPositionRelativeToWidget() -> QWidget | None:
+        """Get the widget that the position is relative to (if any)
+
+        :return: widget that the position is relative to or None
+        """
+
+        return Toast.__position_relative_to_widget
+
+    @staticmethod
+    def setPositionRelativeToWidget(widget: QWidget | None):
+        """Set the widget that the position is relative to
+
+        :param widget: widget that the position is relative to
+        """
+
+        if widget is None:
+            # Remove event filters
+            for toast in Toast.__currently_shown + Toast.__queue:
+                toast.__remove_widget_event_filter()
+
+        Toast.__position_relative_to_widget = widget
+
+        if widget is not None:
+            # Install event filters
+            for toast in Toast.__currently_shown + Toast.__queue:
+                toast.__install_widget_event_filter()
+
+        Toast.__update_currently_showing_position_xy()
+
+    @staticmethod
+    def isMovePositionWithWidget() -> bool:
+        """Get whether the position is moving with the widget when it moves or resizes
+
+        :return: whether the position is moving with the widget
+        """
+
+        return Toast.__move_position_with_widget
+
+    @staticmethod
+    def setMovePositionWithWidget(on: bool):
+        """Set whether the position should move with the widget when it moves or resizes
+
+        :param on: whether the position should move with the widget
+        """
+
+        Toast.__move_position_with_widget = on
+
+        if on:
+            # Install event filters
+            for toast in Toast.__currently_shown + Toast.__queue:
+                toast.__install_widget_event_filter()
+        else:
+            # Remove event filters
+            for toast in Toast.__currently_shown + Toast.__queue:
+                toast.__remove_widget_event_filter()
+
+    @staticmethod
     def isAlwaysOnMainScreen() -> bool:
         """Get whether the toasts are always being shown on the main screen
 
@@ -2262,6 +2379,8 @@ class Toast(QDialog):
         Toast.__spacing = 10
         Toast.__offset_x = 20
         Toast.__offset_y = 45
+        Toast.__position_relative_to_widget = None
+        Toast.__move_position_with_widget = True
         Toast.__always_on_main_screen = False
         Toast.__fixed_screen = None
         Toast.__position = ToastPosition.BOTTOM_RIGHT
