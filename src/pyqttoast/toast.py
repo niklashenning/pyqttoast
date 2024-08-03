@@ -1,10 +1,13 @@
 import math
-import os
 from qtpy.QtGui import QGuiApplication, QScreen
 from qtpy.QtCore import Qt, QPropertyAnimation, QPoint, QTimer, QSize, QMargins, QRect, Signal
-from qtpy.QtGui import QPixmap, QIcon, QColor, QFont, QImage, qRgba, QFontMetrics
+from qtpy.QtGui import QPixmap, QIcon, QFont, QFontMetrics
 from qtpy.QtWidgets import QDialog, QPushButton, QLabel, QGraphicsOpacityEffect, QWidget
 from .toast_enums import ToastPreset, ToastIcon, ToastPosition, ToastButtonAlignment
+from .os_utils import OSUtils
+from .icon_utils import IconUtils
+from .drop_shadow import DropShadow
+from .constants import *
 
 
 class Toast(QDialog):
@@ -14,32 +17,14 @@ class Toast(QDialog):
     __spacing = 10
     __offset_x = 20
     __offset_y = 45
+    __position_relative_to_widget = None
+    __move_position_with_widget = True
     __always_on_main_screen = False
     __fixed_screen = None
     __position = ToastPosition.BOTTOM_RIGHT
 
     __currently_shown = []
     __queue = []
-
-    # Constants
-    __UPDATE_POSITION_DURATION = 200
-    __DURATION_BAR_UPDATE_INTERVAL = 1
-    __DROP_SHADOW_SIZE = 5
-    __SUCCESS_ACCENT_COLOR = QColor('#3E9141')
-    __WARNING_ACCENT_COLOR = QColor('#E8B849')
-    __ERROR_ACCENT_COLOR = QColor('#BA2626')
-    __INFORMATION_ACCENT_COLOR = QColor('#007FFF')
-    __DEFAULT_ACCENT_COLOR = QColor('#5C5C5C')
-    __DEFAULT_BACKGROUND_COLOR = QColor('#E7F4F9')
-    __DEFAULT_TITLE_COLOR = QColor('#000000')
-    __DEFAULT_TEXT_COLOR = QColor('#5C5C5C')
-    __DEFAULT_ICON_SEPARATOR_COLOR = QColor('#D9D9D9')
-    __DEFAULT_CLOSE_BUTTON_ICON_COLOR = QColor('#000000')
-    __DEFAULT_BACKGROUND_COLOR_DARK = QColor('#292929')
-    __DEFAULT_TITLE_COLOR_DARK = QColor('#FFFFFF')
-    __DEFAULT_TEXT_COLOR_DARK = QColor('#D0D0D0')
-    __DEFAULT_ICON_SEPARATOR_COLOR_DARK = QColor('#585858')
-    __DEFAULT_CLOSE_BUTTON_ICON_COLOR_DARK = QColor('#C9C9C9')
 
     # Close event
     closed = Signal()
@@ -57,12 +42,12 @@ class Toast(QDialog):
         self.__show_duration_bar = True
         self.__title = ''
         self.__text = ''
-        self.__icon = self.__get_icon_from_enum(ToastIcon.INFORMATION)
+        self.__icon = IconUtils.get_icon_from_enum(ToastIcon.INFORMATION)
         self.__show_icon = False
         self.__icon_size = QSize(18, 18)
         self.__show_icon_separator = True
         self.__icon_separator_width = 2
-        self.__close_button_icon = self.__get_icon_from_enum(ToastIcon.CLOSE)
+        self.__close_button_icon = IconUtils.get_icon_from_enum(ToastIcon.CLOSE)
         self.__show_close_button = True
         self.__close_button_icon_size = QSize(10, 10)
         self.__close_button_size = QSize(24, 24)
@@ -72,13 +57,13 @@ class Toast(QDialog):
         self.__reset_duration_on_hover = True
         self.__stay_on_top = True
         self.__border_radius = 0
-        self.__background_color = Toast.__DEFAULT_BACKGROUND_COLOR
-        self.__title_color = Toast.__DEFAULT_TITLE_COLOR
-        self.__text_color = Toast.__DEFAULT_TEXT_COLOR
-        self.__icon_color = Toast.__DEFAULT_ACCENT_COLOR
-        self.__icon_separator_color = Toast.__DEFAULT_ICON_SEPARATOR_COLOR
-        self.__close_button_icon_color = Toast.__DEFAULT_CLOSE_BUTTON_ICON_COLOR
-        self.__duration_bar_color = Toast.__DEFAULT_ACCENT_COLOR
+        self.__background_color = DEFAULT_BACKGROUND_COLOR
+        self.__title_color = DEFAULT_TITLE_COLOR
+        self.__text_color = DEFAULT_TEXT_COLOR
+        self.__icon_color = DEFAULT_ACCENT_COLOR
+        self.__icon_separator_color = DEFAULT_ICON_SEPARATOR_COLOR
+        self.__close_button_icon_color = DEFAULT_CLOSE_BUTTON_ICON_COLOR
+        self.__duration_bar_color = DEFAULT_ACCENT_COLOR
         self.__title_font = QFont('Arial', 9, QFont.Weight.Bold)
         self.__text_font = QFont('Arial', 9)
         self.__margins = QMargins(20, 18, 10, 18)
@@ -96,24 +81,11 @@ class Toast(QDialog):
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         self.setFocusPolicy(Qt.FocusPolicy.NoFocus)
 
-        # Notification widget (QLabel because QWidget has weird behaviour with stylesheets)
-        self.__notification = QLabel(self)
+        # Toast widget (QLabel because QWidget has weird behaviour with stylesheets)
+        self.__toast_widget = QLabel(self)
 
-        # Drop shadow (has to be drawn manually since only one graphics effect can be applied)
-        self.__drop_shadow_layer_1 = QWidget(self)
-        self.__drop_shadow_layer_1.setObjectName('toast-drop-shadow-layer-1')
-
-        self.__drop_shadow_layer_2 = QWidget(self)
-        self.__drop_shadow_layer_2.setObjectName('toast-drop-shadow-layer-2')
-
-        self.__drop_shadow_layer_3 = QWidget(self)
-        self.__drop_shadow_layer_3.setObjectName('toast-drop-shadow-layer-3')
-
-        self.__drop_shadow_layer_4 = QWidget(self)
-        self.__drop_shadow_layer_4.setObjectName('toast-drop-shadow-layer-4')
-
-        self.__drop_shadow_layer_5 = QWidget(self)
-        self.__drop_shadow_layer_5.setObjectName('toast-drop-shadow-layer-5')
+        # Drop shadow
+        self.__drop_shadow = DropShadow(self)
 
         # Opacity effect for fading animations
         self.__opacity_effect = QGraphicsOpacityEffect()
@@ -121,26 +93,26 @@ class Toast(QDialog):
         self.setGraphicsEffect(self.__opacity_effect)
 
         # Close button
-        self.__close_button = QPushButton(self.__notification)
+        self.__close_button = QPushButton(self.__toast_widget)
         self.__close_button.setCursor(Qt.CursorShape.PointingHandCursor)
         self.__close_button.clicked.connect(self.hide)
         self.__close_button.setObjectName('toast-close-button')
 
         # Title label
-        self.__title_label = QLabel(self.__notification)
+        self.__title_label = QLabel(self.__toast_widget)
 
         # Text label
-        self.__text_label = QLabel(self.__notification)
+        self.__text_label = QLabel(self.__toast_widget)
 
         # Icon (QPushButton instead of QLabel to get better icon quality)
-        self.__icon_widget = QPushButton(self.__notification)
+        self.__icon_widget = QPushButton(self.__toast_widget)
         self.__icon_widget.setObjectName('toast-icon-widget')
 
         # Icon separator
-        self.__icon_separator = QWidget(self.__notification)
+        self.__icon_separator = QWidget(self.__toast_widget)
 
         # Duration bar container (used to make border radius possible on 4 px high widget)
-        self.__duration_bar_container = QWidget(self.__notification)
+        self.__duration_bar_container = QWidget(self.__toast_widget)
         self.__duration_bar_container.setFixedHeight(4)
         self.__duration_bar_container.setStyleSheet('background: transparent;')
 
@@ -181,11 +153,24 @@ class Toast(QDialog):
 
         # Timer for updating the duration bar
         self.__duration_bar_timer = QTimer(self)
-        self.__duration_timer.setSingleShot(True)
         self.__duration_bar_timer.timeout.connect(self.__update_duration_bar)
 
         # Apply stylesheet
-        self.setStyleSheet(open(self.__get_directory() + '/css/toast_notification.css').read())
+        self.setStyleSheet(open(OSUtils.get_current_directory() + '/css/toast.css').read())
+
+        # Install event filter on widget if position relative to widget and moving with widget
+        if Toast.__position_relative_to_widget and Toast.__move_position_with_widget:
+            self.__install_widget_event_filter()
+
+    def eventFilter(self, watched, event):
+        # Event is on widget, position is set to be relative to widget and moving with widget
+        if (Toast.__position_relative_to_widget and watched == Toast.__position_relative_to_widget
+                and Toast.__move_position_with_widget):
+            # If moved or resized, update toast position if shown
+            if event.type() == event.Type.Move or event.type() == event.Type.Resize:
+                if self in Toast.__currently_shown:
+                    self.__update_position_xy(animate=False)
+        return False
 
     def enterEvent(self, event):
         """Event that happens every time the mouse enters this widget.
@@ -217,34 +202,7 @@ class Toast(QDialog):
 
             # Restart duration bar animation if enabled
             if self.__show_duration_bar:
-                self.__duration_bar_timer.start(Toast.__DURATION_BAR_UPDATE_INTERVAL)
-
-    def setFixedSize(self, size: QSize):
-        """Set a fixed toast size
-
-        :param size: fixed size
-        """
-
-        self.setMinimumSize(size)
-        self.setMaximumSize(size)
-
-    def setFixedWidth(self, width: int):
-        """Set a fixed toast width
-
-        :param width: fixed width
-        """
-
-        self.setMinimumWidth(width)
-        self.setMaximumWidth(width)
-
-    def setFixedHeight(self, height: int):
-        """Set a fixed toast height
-
-        :param height: fixed height
-        """
-
-        self.setMinimumHeight(height)
-        self.setMaximumHeight(height)
+                self.__duration_bar_timer.start(DURATION_BAR_UPDATE_INTERVAL)
 
     def show(self):
         """Show the toast notification"""
@@ -267,7 +225,7 @@ class Toast(QDialog):
 
             # Start duration bar update timer
             if self.__duration != 0 and self.__show_duration_bar:
-                self.__duration_bar_timer.start(Toast.__DURATION_BAR_UPDATE_INTERVAL)
+                self.__duration_bar_timer.start(DURATION_BAR_UPDATE_INTERVAL)
 
             # Calculate position and show (animate position too if not first notification)
             x, y = self.__calculate_position()
@@ -307,13 +265,9 @@ class Toast(QDialog):
             self.fade_in_animation.setEndValue(1)
             self.fade_in_animation.start()
 
-            # Make sure title bar of parent is not grayed out
-            if self.parent() is not None:
-                self.parent().activateWindow()
-
             # Update every other currently shown notification
-            for n in Toast.__currently_shown:
-                n.__update_position_xy()
+            for toast in Toast.__currently_shown:
+                toast.__update_position_xy()
         else:
             # Add notification to queue instead
             Toast.__queue.append(self)
@@ -322,9 +276,9 @@ class Toast(QDialog):
         """Start hiding process of the toast notification"""
 
         if not self.__fading_out:
+            self.__fading_out = True
             if self.__duration != 0:
                 self.__duration_timer.stop()
-                self.__fading_out = True
             self.__fade_out()
 
     def __fade_out(self):
@@ -363,7 +317,7 @@ class Toast(QDialog):
     def __update_duration_bar(self):
         """Update the duration bar chunk with the elapsed time"""
 
-        self.__elapsed_time += Toast.__DURATION_BAR_UPDATE_INTERVAL
+        self.__elapsed_time += DURATION_BAR_UPDATE_INTERVAL
 
         if self.__elapsed_time >= self.__duration:
             self.__duration_bar_timer.stop()
@@ -374,57 +328,65 @@ class Toast(QDialog):
                                      * self.__duration_bar_container.width())
         self.__duration_bar_chunk.setFixedWidth(new_chunk_width)
 
-    def __update_position_xy(self):
-        """Update the x and y position of the toast with an animation"""
+    def __update_position_xy(self, animate: bool = True):
+        """Update the x and y position of the toast with an optional animation
 
-        x, y = self.__calculate_position()
-
-        # Animate position change
-        self.pos_animation = QPropertyAnimation(self, b"pos")
-        self.pos_animation.setEndValue(QPoint(x, y))
-        self.pos_animation.setDuration(Toast.__UPDATE_POSITION_DURATION)
-        self.pos_animation.start()
-
-    def __update_position_x(self):
-        """Update the x position of the toast with an animation"""
-
-        x, y = self.__calculate_position()
-
-        # Animate position change
-        self.pos_animation = QPropertyAnimation(self, b"pos")
-        self.pos_animation.setEndValue(QPoint(x, self.y()))
-        self.pos_animation.setDuration(Toast.__UPDATE_POSITION_DURATION)
-        self.pos_animation.start()
-
-    def __update_position_y(self):
-        """Update the y position of the toast with an animation"""
-
-        x, y = self.__calculate_position()
-
-        # Animate position change
-        self.pos_animation = QPropertyAnimation(self, b"pos")
-        self.pos_animation.setEndValue(QPoint(self.x(), y))
-        self.pos_animation.setDuration(Toast.__UPDATE_POSITION_DURATION)
-        self.pos_animation.start()
-
-    def __calculate_position(self):
-        """Calculate x and y position of the toast
-
-        :return: x and y position
+        :param animate: whether the position change should be animated
         """
 
-        # Calculate vertical space taken up by all the currently showing notifications
-        y_offset = 0
-        for n in Toast.__currently_shown:
-            if n == self:
-                break
-            y_offset += n.__notification.height() + Toast.__spacing
+        x, y = self.__calculate_position()
+        position = QPoint(x, y)
 
-        # Get screen
+        # Animate position change
+        self.pos_animation = QPropertyAnimation(self, b"pos")
+        self.pos_animation.setEndValue(position)
+        self.pos_animation.setDuration(UPDATE_POSITION_DURATION if animate else 0)
+        self.pos_animation.start()
+
+    def __update_position_x(self, animate: bool = True):
+        """Update the x position of the toast with an optional animation
+
+        :param animate: whether the position change should be animated
+        """
+
+        x, y = self.__calculate_position()
+        position = QPoint(x, self.y())
+
+        # Animate position change
+        self.pos_animation = QPropertyAnimation(self, b"pos")
+        self.pos_animation.setEndValue(position)
+        self.pos_animation.setDuration(UPDATE_POSITION_DURATION if animate else 0)
+        self.pos_animation.start()
+
+    def __update_position_y(self, animate: bool = True):
+        """Update the y position of the toast with an optional animation
+
+        :param animate: whether the position change should be animated
+        """
+
+        x, y = self.__calculate_position()
+        position = QPoint(self.x(), y)
+
+        # Animate position change
+        self.pos_animation = QPropertyAnimation(self, b"pos")
+        self.pos_animation.setEndValue(position)
+        self.pos_animation.setDuration(UPDATE_POSITION_DURATION if animate else 0)
+        self.pos_animation.start()
+
+    def __get_bounds(self) -> QRect:
+        """Get the bounds (QRect) of the target screen or widget
+
+        :return: rect of the target screen or widget
+        """
+
+        # Get primary screen
         primary_screen = QGuiApplication.primaryScreen()
         current_screen = None
 
-        if Toast.__fixed_screen is not None:
+        # Calculate target screen / widget
+        if Toast.__position_relative_to_widget is not None:
+            return Toast.__position_relative_to_widget.geometry()
+        elif Toast.__fixed_screen is not None:
             current_screen = Toast.__fixed_screen
         elif Toast.__always_on_main_screen or self.parent() is None:
             current_screen = primary_screen
@@ -438,59 +400,67 @@ class Toast(QDialog):
                         current_screen = primary_screen
                         break
 
+        return current_screen.geometry()
+
+    def __calculate_position(self):
+        """Calculate x and y position of the toast
+
+        :return: x and y position
+        """
+
+        # Calculate vertical space taken up by all the currently showing notifications
+        y_offset = 0
+        for toast in Toast.__currently_shown:
+            if toast == self:
+                break
+            y_offset += toast.__toast_widget.height() + Toast.__spacing
+
         # Calculate x and y position of notification
         x = 0
         y = 0
+        bounds = self.__get_bounds()
 
         if Toast.__position == ToastPosition.BOTTOM_RIGHT:
-            x = (current_screen.geometry().width() - self.__notification.width()
-                 - Toast.__offset_x + current_screen.geometry().x())
-            y = (current_screen.geometry().height()
-                 - self.__notification.height()
-                 - Toast.__offset_y + current_screen.geometry().y() - y_offset)
+            x = (bounds.width() - self.__toast_widget.width()
+                 - Toast.__offset_x + bounds.x())
+            y = (bounds.height() - self.__toast_widget.height()
+                 - Toast.__offset_y + bounds.y() - y_offset)
 
         elif Toast.__position == ToastPosition.BOTTOM_LEFT:
-            x = current_screen.geometry().x() + Toast.__offset_x
-            y = (current_screen.geometry().height()
-                 - self.__notification.height()
-                 - Toast.__offset_y + current_screen.geometry().y() - y_offset)
+            x = bounds.x() + Toast.__offset_x
+            y = (bounds.height() - self.__toast_widget.height()
+                 - Toast.__offset_y + bounds.y() - y_offset)
 
         elif Toast.__position == ToastPosition.BOTTOM_MIDDLE:
-            x = (current_screen.geometry().x()
-                 + current_screen.geometry().width() / 2 - self.__notification.width() / 2)
-            y = (current_screen.geometry().height()
-                 - self.__notification.height()
-                 - Toast.__offset_y + current_screen.geometry().y() - y_offset)
+            x = (bounds.x() + bounds.width() / 2 - self.__toast_widget.width() / 2)
+            y = (bounds.height() - self.__toast_widget.height()
+                 - Toast.__offset_y + bounds.y() - y_offset)
 
         elif Toast.__position == ToastPosition.TOP_RIGHT:
-            x = (current_screen.geometry().width() - self.__notification.width()
-                 - Toast.__offset_x + current_screen.geometry().x())
-            y = (current_screen.geometry().y()
-                 + Toast.__offset_y + y_offset)
+            x = (bounds.width() - self.__toast_widget.width()
+                 - Toast.__offset_x + bounds.x())
+            y = (bounds.y() + Toast.__offset_y + y_offset)
 
         elif Toast.__position == ToastPosition.TOP_LEFT:
-            x = current_screen.geometry().x() + Toast.__offset_x
-            y = (current_screen.geometry().y()
-                 + Toast.__offset_y + y_offset)
+            x = bounds.x() + Toast.__offset_x
+            y = (bounds.y() + Toast.__offset_y + y_offset)
 
         elif Toast.__position == ToastPosition.TOP_MIDDLE:
-            x = (current_screen.geometry().x()
-                 + current_screen.geometry().width() / 2
-                 - self.__notification.width() / 2)
-            y = (current_screen.geometry().y()
-                 + Toast.__offset_y + y_offset)
+            x = (bounds.x() + bounds.width() / 2 - self.__toast_widget.width() / 2)
+            y = (bounds.y() + Toast.__offset_y + y_offset)
 
         elif Toast.__position == ToastPosition.CENTER:
-            x = (current_screen.geometry().x()
-                 + current_screen.geometry().width() / 2
-                 - self.__notification.width() / 2)
-            y = (current_screen.geometry().y()
-                 + current_screen.geometry().height() / 2
-                 - self.__notification.height() / 2
-                 + y_offset)
+            x = (bounds.x() + bounds.width() / 2 - self.__toast_widget.width() / 2)
+            if y_offset == 0:
+                y = (bounds.y() + bounds.height() / 2
+                     - self.__toast_widget.height() / 2 + y_offset)
+            else:
+                y_start = (bounds.y() + bounds.height() / 2
+                           - self.__currently_shown[0].__toast_widget.height() / 2)
+                y = y_start + y_offset
 
-        x = int(x - Toast.__DROP_SHADOW_SIZE)
-        y = int(y - Toast.__DROP_SHADOW_SIZE)
+        x = int(x - DROP_SHADOW_SIZE)
+        y = int(y - DROP_SHADOW_SIZE)
 
         return x, y
 
@@ -556,14 +526,10 @@ class Toast(QDialog):
         # Handle width greater than maximum width
         if width > self.maximumWidth():
             # Enable line break for title and text and recalculate size
-
-            new_title_width = max(title_width, text_width) - (width - self.maximumWidth())
-            if new_title_width > 0:
-                title_width = new_title_width
-
-            new_text_width = max(title_width, text_width) - (width - self.maximumWidth())
-            if new_text_width > 0:
-                text_width = new_text_width
+            new_title_text_width = max(title_width, text_width) - (width - self.maximumWidth())
+            if new_title_text_width > 0:
+                title_width = new_title_text_width
+                text_width = new_title_text_width
 
             self.__title_label.setMinimumWidth(title_width)
             self.__title_label.setWordWrap(True)
@@ -682,33 +648,24 @@ class Toast(QDialog):
             height = self.maximumHeight()
 
         # Calculate width and height including space for drop shadow
-        total_width = width + (Toast.__DROP_SHADOW_SIZE * 2)
-        total_height = height + (Toast.__DROP_SHADOW_SIZE * 2)
+        total_width = width + (DROP_SHADOW_SIZE * 2)
+        total_height = height + (DROP_SHADOW_SIZE * 2)
 
         # Resize drop shadow
-        self.__drop_shadow_layer_1.resize(total_width, total_height)
-        self.__drop_shadow_layer_1.move(0, 0)
-        self.__drop_shadow_layer_2.resize(total_width - 2, total_height - 2)
-        self.__drop_shadow_layer_2.move(1, 1)
-        self.__drop_shadow_layer_3.resize(total_width - 4, total_height - 4)
-        self.__drop_shadow_layer_3.move(2, 2)
-        self.__drop_shadow_layer_4.resize(total_width - 6, total_height - 6)
-        self.__drop_shadow_layer_4.move(3, 3)
-        self.__drop_shadow_layer_5.resize(total_width - 8, total_height - 8)
-        self.__drop_shadow_layer_5.move(4, 4)
+        self.__drop_shadow.resize(QSize(total_width, total_height))
 
         # Resize window
         super().setFixedSize(total_width, total_height)
-        self.__notification.setFixedSize(width, height)
-        self.__notification.move(Toast.__DROP_SHADOW_SIZE,
-                                 Toast.__DROP_SHADOW_SIZE)
-        self.__notification.raise_()
+        self.__toast_widget.setFixedSize(width, height)
+        self.__toast_widget.move(DROP_SHADOW_SIZE, DROP_SHADOW_SIZE)
+        self.__toast_widget.raise_()
 
-        # Calculate difference between height and height of icon section
-        height_icon_section_height_difference = (max(icon_section_height,
-                                                     text_section_height,
-                                                     close_button_section_height)
-                                                 - icon_section_height)
+        # Calculate max height of all sections
+        max_section_height = max(icon_section_height, text_section_height, close_button_section_height)
+
+        # Calculate difference between height and height of icon section and text section
+        height_icon_section_height_difference = max_section_height - icon_section_height
+        height_text_section_height_difference = max_section_height - text_section_height
 
         if self.__show_icon:
             # Move icon
@@ -731,19 +688,13 @@ class Toast(QDialog):
                                        + self.__icon_margins.right(),
                                        self.__margins.top()
                                        + self.__icon_section_margins.top()
+                                       + math.ceil(height_text_section_height_difference / 2)
                                        + math.ceil(forced_additional_height / 2)
                                        - math.floor(forced_reduced_height / 2))
-
         else:
             # Hide icon section
             self.__icon_widget.setVisible(False)
             self.__icon_separator.setVisible(False)
-
-        # Calculate difference between height and height of text section
-        height_text_section_height_difference = (max(icon_section_height,
-                                                     text_section_height,
-                                                     close_button_section_height)
-                                                 - text_section_height)
 
         # Resize title and text labels
         self.__title_label.setFixedSize(max(title_width, text_width), title_height)
@@ -839,6 +790,45 @@ class Toast(QDialog):
         else:
             self.__duration_bar_container.setVisible(False)
 
+    def __install_widget_event_filter(self):
+        """Install an event filter on parent"""
+
+        if Toast.__position_relative_to_widget:
+            Toast.__position_relative_to_widget.installEventFilter(self)
+
+    def __remove_widget_event_filter(self):
+        """Remove an installed event filter on parent"""
+
+        if Toast.__position_relative_to_widget:
+            Toast.__position_relative_to_widget.removeEventFilter(self)
+
+    def setFixedSize(self, size: QSize):
+        """Set a fixed toast size
+
+        :param size: fixed size
+        """
+
+        self.setMinimumSize(size)
+        self.setMaximumSize(size)
+
+    def setFixedWidth(self, width: int):
+        """Set a fixed toast width
+
+        :param width: fixed width
+        """
+
+        self.setMinimumWidth(width)
+        self.setMaximumWidth(width)
+
+    def setFixedHeight(self, height: int):
+        """Set a fixed toast height
+
+        :param height: fixed height
+        """
+
+        self.setMinimumHeight(height)
+        self.setMaximumHeight(height)
+
     def getDuration(self) -> int:
         """Get the duration of the toast
 
@@ -931,7 +921,7 @@ class Toast(QDialog):
             return
 
         if type(icon) == ToastIcon:
-            self.__icon = self.__get_icon_from_enum(icon)
+            self.__icon = IconUtils.get_icon_from_enum(icon)
         else:
             self.__icon = icon
 
@@ -1039,7 +1029,7 @@ class Toast(QDialog):
             return
 
         if type(icon) == ToastIcon:
-            self.__close_button_icon = self.__get_icon_from_enum(icon)
+            self.__close_button_icon = IconUtils.get_icon_from_enum(icon)
         else:
             self.__close_button_icon = icon
 
@@ -1157,11 +1147,7 @@ class Toast(QDialog):
 
         if self.__used:
             return
-
-        if (alignment == ToastButtonAlignment.TOP
-                or alignment == ToastButtonAlignment.MIDDLE
-                or alignment == ToastButtonAlignment.BOTTOM):
-            self.__close_button_alignment = alignment
+        self.__close_button_alignment = alignment
 
     def getFadeInDuration(self) -> int:
         """Get the fade in duration of the toast
@@ -1236,25 +1222,14 @@ class Toast(QDialog):
         self.__stay_on_top = on
 
         if on:
-            if self.parent() is not None:
-                self.setWindowFlags(Qt.WindowType.Window |
-                                    Qt.WindowType.CustomizeWindowHint |
-                                    Qt.WindowType.FramelessWindowHint |
-                                    Qt.WindowType.WindowStaysOnTopHint)
-            else:
-                self.setWindowFlags(Qt.WindowType.Tool |
-                                    Qt.WindowType.CustomizeWindowHint |
-                                    Qt.WindowType.FramelessWindowHint |
-                                    Qt.WindowType.WindowStaysOnTopHint)
+            self.setWindowFlags(Qt.WindowType.Tool |
+                                Qt.WindowType.CustomizeWindowHint |
+                                Qt.WindowType.FramelessWindowHint |
+                                Qt.WindowType.WindowStaysOnTopHint)
         else:
-            if self.parent() is not None:
-                self.setWindowFlags(Qt.WindowType.Window |
-                                    Qt.WindowType.CustomizeWindowHint |
-                                    Qt.WindowType.FramelessWindowHint)
-            else:
-                self.setWindowFlags(Qt.WindowType.Tool |
-                                    Qt.WindowType.CustomizeWindowHint |
-                                    Qt.WindowType.FramelessWindowHint)
+            self.setWindowFlags(Qt.WindowType.Tool |
+                                Qt.WindowType.CustomizeWindowHint |
+                                Qt.WindowType.FramelessWindowHint)
 
     def getBorderRadius(self) -> int:
         """Get the border radius of the toast
@@ -1346,9 +1321,9 @@ class Toast(QDialog):
             return
 
         self.__icon_color = color
-        recolored_image = self.__recolor_image(self.__icon_widget.icon().pixmap(
-                                               self.__icon_widget.iconSize()).toImage(),
-                                               color)
+        recolored_image = IconUtils.recolor_image(self.__icon_widget.icon().pixmap(
+                                                  self.__icon_widget.iconSize()).toImage(),
+                                                  color)
         self.__icon_widget.setIcon(QIcon(QPixmap(recolored_image)))
 
     def getIconSeparatorColor(self) -> QColor:
@@ -1387,9 +1362,9 @@ class Toast(QDialog):
             return
 
         self.__close_button_icon_color = color
-        recolored_image = self.__recolor_image(self.__close_button.icon().pixmap(
-                                               self.__close_button.iconSize()).toImage(),
-                                               color)
+        recolored_image = IconUtils.recolor_image(self.__close_button.icon().pixmap(
+                                                  self.__close_button.iconSize()).toImage(),
+                                                  color)
         self.__close_button.setIcon(QIcon(QPixmap(recolored_image)))
 
     def getDurationBarColor(self) -> QColor:
@@ -1927,43 +1902,43 @@ class Toast(QDialog):
 
         if preset == ToastPreset.SUCCESS or preset == ToastPreset.SUCCESS_DARK:
             self.setIcon(ToastIcon.SUCCESS)
-            self.setIconColor(Toast.__SUCCESS_ACCENT_COLOR)
-            self.setDurationBarColor(Toast.__SUCCESS_ACCENT_COLOR)
+            self.setIconColor(SUCCESS_ACCENT_COLOR)
+            self.setDurationBarColor(SUCCESS_ACCENT_COLOR)
 
         elif preset == ToastPreset.WARNING or preset == ToastPreset.WARNING_DARK:
             self.setIcon(ToastIcon.WARNING)
-            self.setIconColor(Toast.__WARNING_ACCENT_COLOR)
-            self.setDurationBarColor(Toast.__WARNING_ACCENT_COLOR)
+            self.setIconColor(WARNING_ACCENT_COLOR)
+            self.setDurationBarColor(WARNING_ACCENT_COLOR)
 
         elif preset == ToastPreset.ERROR or preset == ToastPreset.ERROR_DARK:
             self.setIcon(ToastIcon.ERROR)
-            self.setIconColor(Toast.__ERROR_ACCENT_COLOR)
-            self.setDurationBarColor(Toast.__ERROR_ACCENT_COLOR)
+            self.setIconColor(ERROR_ACCENT_COLOR)
+            self.setDurationBarColor(ERROR_ACCENT_COLOR)
 
         elif preset == ToastPreset.INFORMATION or preset == ToastPreset.INFORMATION_DARK:
             self.setIcon(ToastIcon.INFORMATION)
-            self.setIconColor(Toast.__INFORMATION_ACCENT_COLOR)
-            self.setDurationBarColor(Toast.__INFORMATION_ACCENT_COLOR)
+            self.setIconColor(INFORMATION_ACCENT_COLOR)
+            self.setDurationBarColor(INFORMATION_ACCENT_COLOR)
 
         if (preset == ToastPreset.SUCCESS
                 or preset == ToastPreset.WARNING
                 or preset == ToastPreset.ERROR
                 or preset == ToastPreset.INFORMATION):
-            self.setBackgroundColor(Toast.__DEFAULT_BACKGROUND_COLOR)
-            self.setCloseButtonIconColor(Toast.__DEFAULT_CLOSE_BUTTON_ICON_COLOR)
-            self.setIconSeparatorColor(Toast.__DEFAULT_ICON_SEPARATOR_COLOR)
-            self.setTitleColor(Toast.__DEFAULT_TITLE_COLOR)
-            self.setTextColor(Toast.__DEFAULT_TEXT_COLOR)
+            self.setBackgroundColor(DEFAULT_BACKGROUND_COLOR)
+            self.setCloseButtonIconColor(DEFAULT_CLOSE_BUTTON_ICON_COLOR)
+            self.setIconSeparatorColor(DEFAULT_ICON_SEPARATOR_COLOR)
+            self.setTitleColor(DEFAULT_TITLE_COLOR)
+            self.setTextColor(DEFAULT_TEXT_COLOR)
 
         elif (preset == ToastPreset.SUCCESS_DARK
                 or preset == ToastPreset.WARNING_DARK
                 or preset == ToastPreset.ERROR_DARK
                 or preset == ToastPreset.INFORMATION_DARK):
-            self.setBackgroundColor(Toast.__DEFAULT_BACKGROUND_COLOR_DARK)
-            self.setCloseButtonIconColor(Toast.__DEFAULT_CLOSE_BUTTON_ICON_COLOR_DARK)
-            self.setIconSeparatorColor(Toast.__DEFAULT_ICON_SEPARATOR_COLOR_DARK)
-            self.setTitleColor(Toast.__DEFAULT_TITLE_COLOR_DARK)
-            self.setTextColor(Toast.__DEFAULT_TEXT_COLOR_DARK)
+            self.setBackgroundColor(DEFAULT_BACKGROUND_COLOR_DARK)
+            self.setCloseButtonIconColor(DEFAULT_CLOSE_BUTTON_ICON_COLOR_DARK)
+            self.setIconSeparatorColor(DEFAULT_ICON_SEPARATOR_COLOR_DARK)
+            self.setTitleColor(DEFAULT_TITLE_COLOR_DARK)
+            self.setTextColor(DEFAULT_TEXT_COLOR_DARK)
 
         self.setShowDurationBar(True)
         self.setShowIcon(True)
@@ -1973,7 +1948,7 @@ class Toast(QDialog):
     def __update_stylesheet(self):
         """Update the stylesheet of the toast"""
 
-        self.__notification.setStyleSheet('background: {};'
+        self.__toast_widget.setStyleSheet('background: {};'
                                           'border-radius: {}px;'
                                           .format(self.__background_color.name(),
                                                   self.__border_radius))
@@ -2001,25 +1976,34 @@ class Toast(QDialog):
         self.__text_label.setStyleSheet('color: {};'.format(self.__text_color.name()))
 
     @staticmethod
-    def __update_currently_showing_position_xy():
-        """Update the x and y position of every currently showing toast"""
+    def __update_currently_showing_position_xy(animate: bool = True):
+        """Update the x and y position of every currently showing toast
+
+        :param animate: whether the position change should be animated
+        """
 
         for toast in Toast.__currently_shown:
-            toast.__update_position_xy()
+            toast.__update_position_xy(animate)
 
     @staticmethod
-    def __update_currently_showing_position_x():
-        """Update the x position of every currently showing toast"""
+    def __update_currently_showing_position_x(animate: bool = True):
+        """Update the x position of every currently showing toast
+
+        :param animate: whether the position change should be animated
+        """
 
         for toast in Toast.__currently_shown:
-            toast.__update_position_x()
+            toast.__update_position_x(animate)
 
     @staticmethod
-    def __update_currently_showing_position_y():
-        """Update the y position of every currently showing toast"""
+    def __update_currently_showing_position_y(animate: bool = True):
+        """Update the y position of every currently showing toast
+
+        :param animate: whether the position change should be animated
+        """
 
         for toast in Toast.__currently_shown:
-            toast.__update_position_y()
+            toast.__update_position_y(animate)
 
     @staticmethod
     def __show_next_in_queue():
@@ -2028,59 +2012,6 @@ class Toast(QDialog):
         if len(Toast.__queue) > 0:
             next_toast = Toast.__queue.pop(0)
             next_toast.show()
-
-    @staticmethod
-    def __recolor_image(image: QImage, color: QColor):
-        """Take an image and return a copy with the colors changed
-
-        :param image: image to recolor
-        :param color: new color
-        :return: recolored image
-        """
-
-        # Loop through every pixel
-        for x in range(0, image.width()):
-            for y in range(0, image.height()):
-                # Get current color of the pixel
-                current_color = image.pixelColor(x, y)
-                # Replace the rgb values with rgb of new color and keep alpha the same
-                new_color_r = color.red()
-                new_color_g = color.green()
-                new_color_b = color.blue()
-                new_color = QColor.fromRgba(
-                    qRgba(new_color_r, new_color_g, new_color_b, current_color.alpha()))
-                image.setPixelColor(x, y, new_color)
-        return image
-
-    @staticmethod
-    def __get_directory():
-        """Get the current directory path
-
-        :return: directory path
-        """
-
-        return os.path.dirname(os.path.realpath(__file__))
-
-    @staticmethod
-    def __get_icon_from_enum(enum_icon: ToastIcon):
-        """Get a QPixmap from a ToastIcon
-
-        :param enum_icon: ToastIcon
-        :return: pixmap of the ToastIcon
-        """
-
-        if enum_icon == ToastIcon.SUCCESS:
-            return QPixmap(Toast.__get_directory() + '/icons/success.png')
-        elif enum_icon == ToastIcon.WARNING:
-            return QPixmap(Toast.__get_directory() + '/icons/warning.png')
-        elif enum_icon == ToastIcon.ERROR:
-            return QPixmap(Toast.__get_directory() + '/icons/error.png')
-        elif enum_icon == ToastIcon.INFORMATION:
-            return QPixmap(Toast.__get_directory() + '/icons/information.png')
-        elif enum_icon == ToastIcon.CLOSE:
-            return QPixmap(Toast.__get_directory() + '/icons/close.png')
-        else:
-            return None
 
     @staticmethod
     def getMaximumOnScreen():
@@ -2185,6 +2116,63 @@ class Toast(QDialog):
         Toast.__update_currently_showing_position_xy()
 
     @staticmethod
+    def getPositionRelativeToWidget() -> QWidget | None:
+        """Get the widget that the position is relative to (if any)
+
+        :return: widget that the position is relative to or None
+        """
+
+        return Toast.__position_relative_to_widget
+
+    @staticmethod
+    def setPositionRelativeToWidget(widget: QWidget | None):
+        """Set the widget that the position is relative to
+
+        :param widget: widget that the position is relative to
+        """
+
+        if widget is None:
+            # Remove event filters
+            for toast in Toast.__currently_shown + Toast.__queue:
+                toast.__remove_widget_event_filter()
+
+        Toast.__position_relative_to_widget = widget
+
+        if widget is not None:
+            # Install event filters
+            for toast in Toast.__currently_shown + Toast.__queue:
+                toast.__install_widget_event_filter()
+
+        Toast.__update_currently_showing_position_xy()
+
+    @staticmethod
+    def isMovePositionWithWidget() -> bool:
+        """Get whether the position is moving with the widget when it moves or resizes
+
+        :return: whether the position is moving with the widget
+        """
+
+        return Toast.__move_position_with_widget
+
+    @staticmethod
+    def setMovePositionWithWidget(on: bool):
+        """Set whether the position should move with the widget when it moves or resizes
+
+        :param on: whether the position should move with the widget
+        """
+
+        Toast.__move_position_with_widget = on
+
+        if on:
+            # Install event filters
+            for toast in Toast.__currently_shown + Toast.__queue:
+                toast.__install_widget_event_filter()
+        else:
+            # Remove event filters
+            for toast in Toast.__currently_shown + Toast.__queue:
+                toast.__remove_widget_event_filter()
+
+    @staticmethod
     def isAlwaysOnMainScreen() -> bool:
         """Get whether the toasts are always being shown on the main screen
 
@@ -2238,15 +2226,8 @@ class Toast(QDialog):
         :param position: new position
         """
 
-        if (position == ToastPosition.BOTTOM_RIGHT
-                or position == ToastPosition.BOTTOM_LEFT
-                or position == ToastPosition.BOTTOM_MIDDLE
-                or position == ToastPosition.TOP_RIGHT
-                or position == ToastPosition.TOP_LEFT
-                or position == ToastPosition.TOP_MIDDLE
-                or position == ToastPosition.CENTER):
-            Toast.__position = position
-            Toast.__update_currently_showing_position_xy()
+        Toast.__position = position
+        Toast.__update_currently_showing_position_xy()
 
     @staticmethod
     def getCount() -> int:
@@ -2286,6 +2267,8 @@ class Toast(QDialog):
         Toast.__spacing = 10
         Toast.__offset_x = 20
         Toast.__offset_y = 45
+        Toast.__position_relative_to_widget = None
+        Toast.__move_position_with_widget = True
         Toast.__always_on_main_screen = False
         Toast.__fixed_screen = None
         Toast.__position = ToastPosition.BOTTOM_RIGHT

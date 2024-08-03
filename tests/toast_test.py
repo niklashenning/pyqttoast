@@ -1,12 +1,14 @@
 import os
 import pytest
 from unittest.mock import patch
+from PyQt6.QtWidgets import QMainWindow
 from PyQt6.QtCore import QSize, QMargins, Qt, QRect
 from PyQt6.QtGui import QColor, QFont, QGuiApplication, QPixmap
 from src.pyqttoast import Toast, ToastPosition, ToastButtonAlignment, ToastPreset, ToastIcon
+from src.pyqttoast.constants import DROP_SHADOW_SIZE
+
 
 ROOT_PATH = os.path.abspath(os.curdir)
-DROP_SHADOW_SIZE = 5
 
 
 @pytest.fixture(autouse=True)
@@ -28,6 +30,8 @@ def test_initial_values(qtbot):
     assert Toast.getMaximumOnScreen() == 3
     assert Toast.getSpacing() == 10
     assert Toast.getOffset() == (20, 45)
+    assert Toast.getPositionRelativeToWidget() is None
+    assert Toast.isMovePositionWithWidget() == True
     assert Toast.isAlwaysOnMainScreen() == False
     assert Toast.getFixedScreen() is None
     assert Toast.getPosition() == ToastPosition.BOTTOM_RIGHT
@@ -308,14 +312,51 @@ def test_set_offset(qtbot):
     assert offset_y == 140
 
 
+def test_set_position_relative_to_widget(qtbot):
+    """Test setting the position to be relative to a widget"""
+
+    window = QMainWindow()
+    Toast.setPositionRelativeToWidget(window)
+    Toast.setOffset(0, 0)
+    toast = Toast()
+    toast.setFadeInDuration(0)
+    toast.show()
+    qtbot.addWidget(window)
+
+    assert toast.x() == window.x() + window.width() - toast.width() + DROP_SHADOW_SIZE
+
+
+def test_set_move_position_with_widget(qtbot):
+    """Test enabling / disabling moving the toasts positions with widget"""
+
+    window = QMainWindow()
+    Toast.setPositionRelativeToWidget(window)
+    Toast.setOffset(0, 0)
+    toast = Toast()
+    toast.setFadeInDuration(0)
+    toast.show()
+    window.show()
+    qtbot.addWidget(window)
+
+    # Should move with widget
+    window.move(100, 100)
+    toast_position = toast.x()
+    assert toast_position == window.x() + window.width() - toast.width() + DROP_SHADOW_SIZE
+
+    # Should not move with widget
+    Toast.setMovePositionWithWidget(False)
+    window.move(250, 250)
+    assert toast.x() == toast_position
+
+
 def test_set_always_on_main_screen(qtbot):
     """Test setting the always on main screen option"""
 
     Toast.setAlwaysOnMainScreen(True)
     toast = Toast()
+    toast.setFadeInDuration(0)
     toast.show()
     qtbot.addWidget(toast)
-    toast.setFadeInDuration(0)
 
     assert QGuiApplication.primaryScreen().geometry().contains(toast.geometry())
 
@@ -475,6 +516,8 @@ def test_reset(qtbot):
     Toast.setMaximumOnScreen(10)
     Toast.setSpacing(25)
     Toast.setOffset(100, 150)
+    Toast.setPositionRelativeToWidget(QMainWindow())
+    Toast.setMovePositionWithWidget(False)
     Toast.setAlwaysOnMainScreen(True)
     Toast.setFixedScreen(QGuiApplication.primaryScreen())
     Toast.setPosition(ToastPosition.CENTER)
@@ -487,6 +530,8 @@ def test_reset(qtbot):
     assert Toast.getMaximumOnScreen() == 3
     assert Toast.getSpacing() == 10
     assert Toast.getOffset() == (20, 45)
+    assert Toast.getPositionRelativeToWidget() is None
+    assert Toast.isMovePositionWithWidget() == True
     assert Toast.isAlwaysOnMainScreen() == False
     assert Toast.getFixedScreen() is None
     assert Toast.getPosition() == ToastPosition.BOTTOM_RIGHT

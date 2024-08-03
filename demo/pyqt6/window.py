@@ -13,11 +13,13 @@ class Window(QMainWindow):
         self.setFixedSize(650, 360)
         self.setWindowTitle('PyQt Toast Demo')
 
+        # Create grid layout
         grid = QGridLayout()
         grid.addWidget(self.create_static_settings_group(), 0, 0)
         grid.addWidget(self.create_toast_preset_group(), 1, 0)
         grid.addWidget(self.create_toast_custom_group(), 0, 1, 2, 1, Qt.AlignmentFlag.AlignTop)
 
+        # Apply layout
         central_widget = QWidget()
         central_widget.setLayout(grid)
         self.setCentralWidget(central_widget)
@@ -26,6 +28,7 @@ class Window(QMainWindow):
     def create_static_settings_group(self):
         group_box = QGroupBox("Static Settings")
 
+        # Create widgets
         self.maximum_on_screen_spinbox = QSpinBox()
         self.maximum_on_screen_spinbox.setRange(1, 10)
         self.maximum_on_screen_spinbox.setValue(Toast.getMaximumOnScreen())
@@ -59,6 +62,7 @@ class Window(QMainWindow):
         self.update_button.setFixedHeight(32)
         self.update_button.clicked.connect(self.update_static_settings)
 
+        # Add widgets to layout
         form_layout = QFormLayout()
         form_layout.addRow('Max on screen:', self.maximum_on_screen_spinbox)
         form_layout.addRow('Spacing:', self.spacing_spinbox)
@@ -66,6 +70,7 @@ class Window(QMainWindow):
         form_layout.addRow('Offset Y:', self.offset_y_spinbox)
         form_layout.addRow('Position:', self.position_dropdown)
 
+        # Add layout and widgets to main layout
         vbox_layout = QVBoxLayout()
         vbox_layout.addLayout(form_layout)
         vbox_layout.addWidget(self.always_on_main_screen_checkbox)
@@ -78,6 +83,7 @@ class Window(QMainWindow):
     def create_toast_preset_group(self):
         group_box = QGroupBox("Toast Presets")
 
+        # Create widgets
         self.preset_dropdown = QComboBox()
         self.preset_dropdown.addItems(['SUCCESS', 'WARNING',
                                        'ERROR', 'INFORMATION',
@@ -89,6 +95,7 @@ class Window(QMainWindow):
         self.show_preset_toast_button.clicked.connect(self.show_preset_toast)
         self.show_preset_toast_button.setFixedHeight(32)
 
+        # Add widgets to layout
         vbox_layout = QVBoxLayout()
         vbox_layout.addWidget(self.preset_dropdown)
         vbox_layout.addWidget(self.show_preset_toast_button)
@@ -100,6 +107,7 @@ class Window(QMainWindow):
     def create_toast_custom_group(self):
         group_box = QGroupBox("Custom Toast")
 
+        # Create widgets
         self.duration_spinbox = QSpinBox()
         self.duration_spinbox.setRange(0, 50000)
         self.duration_spinbox.setValue(5000)
@@ -117,7 +125,6 @@ class Window(QMainWindow):
         self.border_radius_spinbox.setFixedHeight(24)
 
         self.show_icon_checkbox = QCheckBox('Show icon')
-        self.show_icon_checkbox.setChecked(False)
 
         self.icon_dropdown = QComboBox()
         self.icon_dropdown.addItems(['SUCCESS', 'WARNING', 'ERROR',
@@ -171,6 +178,7 @@ class Window(QMainWindow):
         self.custom_toast_button.setFixedHeight(32)
         self.custom_toast_button.clicked.connect(self.show_custom_toast)
 
+        # Add widgets to layouts
         form_layout = QFormLayout()
         form_layout.addRow('Duration:', self.duration_spinbox)
         form_layout.addRow('Title:', self.title_input)
@@ -216,6 +224,7 @@ class Window(QMainWindow):
         double_form_layout_4.addWidget(self.fade_out_duration_spinbox)
         double_form_layout_4.setContentsMargins(0, 0, 0, 3)
 
+        # Add layouts and widgets to main layout
         vbox_layout = QVBoxLayout()
         vbox_layout.addLayout(form_layout)
         vbox_layout.addLayout(icon_layout)
@@ -231,6 +240,7 @@ class Window(QMainWindow):
         return group_box
 
     def update_static_settings(self):
+        # Update the static settings of the Toast class
         Toast.setMaximumOnScreen(self.maximum_on_screen_spinbox.value())
         Toast.setSpacing(self.spacing_spinbox.value())
         Toast.setOffset(self.offset_x_spinbox.value(), self.offset_y_spinbox.value())
@@ -253,6 +263,7 @@ class Window(QMainWindow):
             Toast.setPosition(ToastPosition.CENTER)
 
     def show_preset_toast(self):
+        # Show toast with selected preset and random duration
         toast = Toast(self)
         toast.setDuration(random.randint(2000, 5000))
 
@@ -301,6 +312,7 @@ class Window(QMainWindow):
         toast.show()
 
     def show_custom_toast(self):
+        # Show custom toast with selected settings
         toast = Toast(self)
         toast.setDuration(self.duration_spinbox.value())
         toast.setTitle(self.title_input.text())
