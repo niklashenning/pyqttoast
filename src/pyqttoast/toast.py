@@ -1,10 +1,11 @@
 import math
-import os
 from qtpy.QtGui import QGuiApplication, QScreen
 from qtpy.QtCore import Qt, QPropertyAnimation, QPoint, QTimer, QSize, QMargins, QRect, Signal
-from qtpy.QtGui import QPixmap, QIcon, QFont, QImage, qRgba, QFontMetrics
+from qtpy.QtGui import QPixmap, QIcon, QFont, QFontMetrics
 from qtpy.QtWidgets import QDialog, QPushButton, QLabel, QGraphicsOpacityEffect, QWidget
 from .toast_enums import ToastPreset, ToastIcon, ToastPosition, ToastButtonAlignment
+from .os_handler import OSHandler
+from .icon_handler import IconHandler
 from .constants import *
 
 
@@ -40,12 +41,12 @@ class Toast(QDialog):
         self.__show_duration_bar = True
         self.__title = ''
         self.__text = ''
-        self.__icon = self.__get_icon_from_enum(ToastIcon.INFORMATION)
+        self.__icon = IconHandler.get_icon_from_enum(ToastIcon.INFORMATION)
         self.__show_icon = False
         self.__icon_size = QSize(18, 18)
         self.__show_icon_separator = True
         self.__icon_separator_width = 2
-        self.__close_button_icon = self.__get_icon_from_enum(ToastIcon.CLOSE)
+        self.__close_button_icon = IconHandler.get_icon_from_enum(ToastIcon.CLOSE)
         self.__show_close_button = True
         self.__close_button_icon_size = QSize(10, 10)
         self.__close_button_size = QSize(24, 24)
@@ -167,7 +168,7 @@ class Toast(QDialog):
         self.__duration_bar_timer.timeout.connect(self.__update_duration_bar)
 
         # Apply stylesheet
-        self.setStyleSheet(open(self.__get_directory() + '/css/toast.css').read())
+        self.setStyleSheet(open(OSHandler.get_current_directory() + '/css/toast.css').read())
 
         # Install event filter on widget if position relative to widget and moving with widget
         if Toast.__position_relative_to_widget and Toast.__move_position_with_widget:
@@ -950,7 +951,7 @@ class Toast(QDialog):
             return
 
         if type(icon) == ToastIcon:
-            self.__icon = self.__get_icon_from_enum(icon)
+            self.__icon = IconHandler.get_icon_from_enum(icon)
         else:
             self.__icon = icon
 
@@ -1058,7 +1059,7 @@ class Toast(QDialog):
             return
 
         if type(icon) == ToastIcon:
-            self.__close_button_icon = self.__get_icon_from_enum(icon)
+            self.__close_button_icon = IconHandler.get_icon_from_enum(icon)
         else:
             self.__close_button_icon = icon
 
@@ -1350,7 +1351,7 @@ class Toast(QDialog):
             return
 
         self.__icon_color = color
-        recolored_image = self.__recolor_image(self.__icon_widget.icon().pixmap(
+        recolored_image = IconHandler.recolor_image(self.__icon_widget.icon().pixmap(
                                                self.__icon_widget.iconSize()).toImage(),
                                                color)
         self.__icon_widget.setIcon(QIcon(QPixmap(recolored_image)))
@@ -1391,7 +1392,7 @@ class Toast(QDialog):
             return
 
         self.__close_button_icon_color = color
-        recolored_image = self.__recolor_image(self.__close_button.icon().pixmap(
+        recolored_image = IconHandler.recolor_image(self.__close_button.icon().pixmap(
                                                self.__close_button.iconSize()).toImage(),
                                                color)
         self.__close_button.setIcon(QIcon(QPixmap(recolored_image)))
@@ -2041,59 +2042,6 @@ class Toast(QDialog):
         if len(Toast.__queue) > 0:
             next_toast = Toast.__queue.pop(0)
             next_toast.show()
-
-    @staticmethod
-    def __recolor_image(image: QImage, color: QColor):
-        """Take an image and return a copy with the colors changed
-
-        :param image: image to recolor
-        :param color: new color
-        :return: recolored image
-        """
-
-        # Loop through every pixel
-        for x in range(0, image.width()):
-            for y in range(0, image.height()):
-                # Get current color of the pixel
-                current_color = image.pixelColor(x, y)
-                # Replace the rgb values with rgb of new color and keep alpha the same
-                new_color_r = color.red()
-                new_color_g = color.green()
-                new_color_b = color.blue()
-                new_color = QColor.fromRgba(
-                    qRgba(new_color_r, new_color_g, new_color_b, current_color.alpha()))
-                image.setPixelColor(x, y, new_color)
-        return image
-
-    @staticmethod
-    def __get_directory():
-        """Get the current directory path
-
-        :return: directory path
-        """
-
-        return os.path.dirname(os.path.realpath(__file__))
-
-    @staticmethod
-    def __get_icon_from_enum(enum_icon: ToastIcon):
-        """Get a QPixmap from a ToastIcon
-
-        :param enum_icon: ToastIcon
-        :return: pixmap of the ToastIcon
-        """
-
-        if enum_icon == ToastIcon.SUCCESS:
-            return QPixmap(Toast.__get_directory() + '/icons/success.png')
-        elif enum_icon == ToastIcon.WARNING:
-            return QPixmap(Toast.__get_directory() + '/icons/warning.png')
-        elif enum_icon == ToastIcon.ERROR:
-            return QPixmap(Toast.__get_directory() + '/icons/error.png')
-        elif enum_icon == ToastIcon.INFORMATION:
-            return QPixmap(Toast.__get_directory() + '/icons/information.png')
-        elif enum_icon == ToastIcon.CLOSE:
-            return QPixmap(Toast.__get_directory() + '/icons/close.png')
-        else:
-            return None
 
     @staticmethod
     def getMaximumOnScreen():
