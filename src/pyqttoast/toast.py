@@ -6,6 +6,7 @@ from qtpy.QtWidgets import QDialog, QPushButton, QLabel, QGraphicsOpacityEffect,
 from .toast_enums import ToastPreset, ToastIcon, ToastPosition, ToastButtonAlignment
 from .os_handler import OSHandler
 from .icon_handler import IconHandler
+from .drop_shadow import DropShadow
 from .constants import *
 
 
@@ -83,21 +84,8 @@ class Toast(QDialog):
         # Toast widget (QLabel because QWidget has weird behaviour with stylesheets)
         self.__toast_widget = QLabel(self)
 
-        # Drop shadow (has to be drawn manually since only one graphics effect can be applied)
-        self.__drop_shadow_layer_1 = QWidget(self)
-        self.__drop_shadow_layer_1.setObjectName('toast-drop-shadow-layer-1')
-
-        self.__drop_shadow_layer_2 = QWidget(self)
-        self.__drop_shadow_layer_2.setObjectName('toast-drop-shadow-layer-2')
-
-        self.__drop_shadow_layer_3 = QWidget(self)
-        self.__drop_shadow_layer_3.setObjectName('toast-drop-shadow-layer-3')
-
-        self.__drop_shadow_layer_4 = QWidget(self)
-        self.__drop_shadow_layer_4.setObjectName('toast-drop-shadow-layer-4')
-
-        self.__drop_shadow_layer_5 = QWidget(self)
-        self.__drop_shadow_layer_5.setObjectName('toast-drop-shadow-layer-5')
+        # Drop shadow
+        self.__drop_shadow = DropShadow(self)
 
         # Opacity effect for fading animations
         self.__opacity_effect = QGraphicsOpacityEffect()
@@ -673,16 +661,7 @@ class Toast(QDialog):
         total_height = height + (DROP_SHADOW_SIZE * 2)
 
         # Resize drop shadow
-        self.__drop_shadow_layer_1.resize(total_width, total_height)
-        self.__drop_shadow_layer_1.move(0, 0)
-        self.__drop_shadow_layer_2.resize(total_width - 2, total_height - 2)
-        self.__drop_shadow_layer_2.move(1, 1)
-        self.__drop_shadow_layer_3.resize(total_width - 4, total_height - 4)
-        self.__drop_shadow_layer_3.move(2, 2)
-        self.__drop_shadow_layer_4.resize(total_width - 6, total_height - 6)
-        self.__drop_shadow_layer_4.move(3, 3)
-        self.__drop_shadow_layer_5.resize(total_width - 8, total_height - 8)
-        self.__drop_shadow_layer_5.move(4, 4)
+        self.__drop_shadow.resize(QSize(total_width, total_height))
 
         # Resize window
         super().setFixedSize(total_width, total_height)
