@@ -1,6 +1,6 @@
 from qtpy.QtWidgets import QWidget
 from qtpy.QtCore import QSize
-from .os_handler import OSHandler
+from .os_utils import OSUtils
 
 
 class DropShadow(QWidget):
@@ -30,13 +30,13 @@ class DropShadow(QWidget):
         self.layer_5.setObjectName('drop-shadow-layer-5')
 
         # Apply stylesheet
-        self.setStyleSheet(open(OSHandler.get_current_directory()
+        self.setStyleSheet(open(OSUtils.get_current_directory()
                                 + '/css/drop_shadow.css').read())
 
     def resize(self, size: QSize):
-        """
+        """Resize the drop shadow widget
 
-        :param size:
+        :param size: new size
         """
 
         super().resize(size)

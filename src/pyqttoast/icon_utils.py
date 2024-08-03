@@ -1,9 +1,10 @@
 from qtpy.QtGui import QPixmap, QColor, QImage, qRgba
 from .toast_enums import ToastIcon
-from .os_handler import OSHandler
+from .os_utils import OSUtils
 
 
-class IconHandler:
+class IconUtils:
+
     @staticmethod
     def get_icon_from_enum(enum_icon: ToastIcon):
         """Get a QPixmap from a ToastIcon
@@ -13,17 +14,15 @@ class IconHandler:
         """
 
         if enum_icon == ToastIcon.SUCCESS:
-            return QPixmap(OSHandler.get_current_directory() + '/icons/success.png')
+            return QPixmap(OSUtils.get_current_directory() + '/icons/success.png')
         elif enum_icon == ToastIcon.WARNING:
-            return QPixmap(OSHandler.get_current_directory() + '/icons/warning.png')
+            return QPixmap(OSUtils.get_current_directory() + '/icons/warning.png')
         elif enum_icon == ToastIcon.ERROR:
-            return QPixmap(OSHandler.get_current_directory() + '/icons/error.png')
+            return QPixmap(OSUtils.get_current_directory() + '/icons/error.png')
         elif enum_icon == ToastIcon.INFORMATION:
-            return QPixmap(OSHandler.get_current_directory() + '/icons/information.png')
+            return QPixmap(OSUtils.get_current_directory() + '/icons/information.png')
         elif enum_icon == ToastIcon.CLOSE:
-            return QPixmap(OSHandler.get_current_directory() + '/icons/close.png')
-        else:
-            return None
+            return QPixmap(OSUtils.get_current_directory() + '/icons/close.png')
 
     @staticmethod
     def recolor_image(image: QImage, color: QColor):

@@ -4,8 +4,8 @@ from qtpy.QtCore import Qt, QPropertyAnimation, QPoint, QTimer, QSize, QMargins,
 from qtpy.QtGui import QPixmap, QIcon, QFont, QFontMetrics
 from qtpy.QtWidgets import QDialog, QPushButton, QLabel, QGraphicsOpacityEffect, QWidget
 from .toast_enums import ToastPreset, ToastIcon, ToastPosition, ToastButtonAlignment
-from .os_handler import OSHandler
-from .icon_handler import IconHandler
+from .os_utils import OSUtils
+from .icon_utils import IconUtils
 from .drop_shadow import DropShadow
 from .constants import *
 
@@ -42,12 +42,12 @@ class Toast(QDialog):
         self.__show_duration_bar = True
         self.__title = ''
         self.__text = ''
-        self.__icon = IconHandler.get_icon_from_enum(ToastIcon.INFORMATION)
+        self.__icon = IconUtils.get_icon_from_enum(ToastIcon.INFORMATION)
         self.__show_icon = False
         self.__icon_size = QSize(18, 18)
         self.__show_icon_separator = True
         self.__icon_separator_width = 2
-        self.__close_button_icon = IconHandler.get_icon_from_enum(ToastIcon.CLOSE)
+        self.__close_button_icon = IconUtils.get_icon_from_enum(ToastIcon.CLOSE)
         self.__show_close_button = True
         self.__close_button_icon_size = QSize(10, 10)
         self.__close_button_size = QSize(24, 24)
@@ -156,7 +156,7 @@ class Toast(QDialog):
         self.__duration_bar_timer.timeout.connect(self.__update_duration_bar)
 
         # Apply stylesheet
-        self.setStyleSheet(open(OSHandler.get_current_directory() + '/css/toast.css').read())
+        self.setStyleSheet(open(OSUtils.get_current_directory() + '/css/toast.css').read())
 
         # Install event filter on widget if position relative to widget and moving with widget
         if Toast.__position_relative_to_widget and Toast.__move_position_with_widget:
@@ -337,14 +337,11 @@ class Toast(QDialog):
         x, y = self.__calculate_position()
         position = QPoint(x, y)
 
-        if animate:
-            # Animate position change
-            self.pos_animation = QPropertyAnimation(self, b"pos")
-            self.pos_animation.setEndValue(position)
-            self.pos_animation.setDuration(UPDATE_POSITION_DURATION)
-            self.pos_animation.start()
-        else:
-            self.move(position)
+        # Animate position change
+        self.pos_animation = QPropertyAnimation(self, b"pos")
+        self.pos_animation.setEndValue(position)
+        self.pos_animation.setDuration(UPDATE_POSITION_DURATION if animate else 0)
+        self.pos_animation.start()
 
     def __update_position_x(self, animate: bool = True):
         """Update the x position of the toast with an optional animation
@@ -355,14 +352,11 @@ class Toast(QDialog):
         x, y = self.__calculate_position()
         position = QPoint(x, self.y())
 
-        if animate:
-            # Animate position change
-            self.pos_animation = QPropertyAnimation(self, b"pos")
-            self.pos_animation.setEndValue(position)
-            self.pos_animation.setDuration(UPDATE_POSITION_DURATION)
-            self.pos_animation.start()
-        else:
-            self.move(position)
+        # Animate position change
+        self.pos_animation = QPropertyAnimation(self, b"pos")
+        self.pos_animation.setEndValue(position)
+        self.pos_animation.setDuration(UPDATE_POSITION_DURATION if animate else 0)
+        self.pos_animation.start()
 
     def __update_position_y(self, animate: bool = True):
         """Update the y position of the toast with an optional animation
@@ -373,14 +367,11 @@ class Toast(QDialog):
         x, y = self.__calculate_position()
         position = QPoint(self.x(), y)
 
-        if animate:
-            # Animate position change
-            self.pos_animation = QPropertyAnimation(self, b"pos")
-            self.pos_animation.setEndValue(position)
-            self.pos_animation.setDuration(UPDATE_POSITION_DURATION)
-            self.pos_animation.start()
-        else:
-            self.move(position)
+        # Animate position change
+        self.pos_animation = QPropertyAnimation(self, b"pos")
+        self.pos_animation.setEndValue(position)
+        self.pos_animation.setDuration(UPDATE_POSITION_DURATION if animate else 0)
+        self.pos_animation.start()
 
     def __get_bounds(self) -> QRect:
         """Get the bounds (QRect) of the target screen or widget
@@ -930,7 +921,7 @@ class Toast(QDialog):
             return
 
         if type(icon) == ToastIcon:
-            self.__icon = IconHandler.get_icon_from_enum(icon)
+            self.__icon = IconUtils.get_icon_from_enum(icon)
         else:
             self.__icon = icon
 
@@ -1038,7 +1029,7 @@ class Toast(QDialog):
             return
 
         if type(icon) == ToastIcon:
-            self.__close_button_icon = IconHandler.get_icon_from_enum(icon)
+            self.__close_button_icon = IconUtils.get_icon_from_enum(icon)
         else:
             self.__close_button_icon = icon
 
@@ -1330,9 +1321,9 @@ class Toast(QDialog):
             return
 
         self.__icon_color = color
-        recolored_image = IconHandler.recolor_image(self.__icon_widget.icon().pixmap(
-                                               self.__icon_widget.iconSize()).toImage(),
-                                               color)
+        recolored_image = IconUtils.recolor_image(self.__icon_widget.icon().pixmap(
+                                                  self.__icon_widget.iconSize()).toImage(),
+                                                  color)
         self.__icon_widget.setIcon(QIcon(QPixmap(recolored_image)))
 
     def getIconSeparatorColor(self) -> QColor:
@@ -1371,9 +1362,9 @@ class Toast(QDialog):
             return
 
         self.__close_button_icon_color = color
-        recolored_image = IconHandler.recolor_image(self.__close_button.icon().pixmap(
-                                               self.__close_button.iconSize()).toImage(),
-                                               color)
+        recolored_image = IconUtils.recolor_image(self.__close_button.icon().pixmap(
+                                                  self.__close_button.iconSize()).toImage(),
+                                                  color)
         self.__close_button.setIcon(QIcon(QPixmap(recolored_image)))
 
     def getDurationBarColor(self) -> QColor:
@@ -2125,7 +2116,7 @@ class Toast(QDialog):
         Toast.__update_currently_showing_position_xy()
 
     @staticmethod
-    def isPositionRelativeToWidget() -> QWidget | None:
+    def getPositionRelativeToWidget() -> QWidget | None:
         """Get the widget that the position is relative to (if any)
 
         :return: widget that the position is relative to or None
