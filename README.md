@@ -15,6 +15,7 @@ A fully customizable and modern toast notification library for PyQt and PySide
 * Supports queueing of toasts
 * Supports 7 different positions
 * Supports multiple screens
+* Supports positioning relative to widgets
 * Modern and fully customizable UI
 * Works with `PyQt5`, `PyQt6`, `PySide2`, and `PySide6`
 
@@ -62,6 +63,16 @@ Toast.setPosition(ToastPosition.BOTTOM_MIDDLE)  # Default: ToastPosition.BOTTOM_
 > **AVAILABLE POSITIONS:** <br> `BOTTOM_LEFT`, `BOTTOM_MIDDLE`, `BOTTOM_RIGHT`, `TOP_LEFT`, `TOP_MIDDLE`, `TOP_RIGHT`, `CENTER`
 
 
+* **Setting whether the toasts should always be shown on the main screen (<u>static</u>):**
+```python
+Toast.setAlwaysOnMainScreen(True)  # Default: False
+```
+
+* **Positioning the toasts relative to a widget instead of a screen (<u>static</u>):**
+```python
+Toast.setPositionRelativeToWidget(some_widget)  # Default: None
+```
+
 * **Setting a limit on how many toasts can be shown at the same time (<u>static</u>):**
 ```python
 Toast.setMaximumOnScreen(5)  # Default: 3
@@ -77,11 +88,6 @@ Toast.setSpacing(20)  # Default: 10
 * **Setting the x and y offset of the toast position (<u>static</u>):**
 ```python
 Toast.setOffset(30, 55)  # Default: 20, 45
-```
-
-* **Setting whether the toasts should always be shown on the main screen (<u>static</u>):**
-```python
-Toast.setAlwaysOnMainScreen(True)  # Default: False
 ```
 
 * **Making the toast show forever until it is closed:**
@@ -185,20 +191,21 @@ toast.setFixedSize(QSize(350, 80))
 
 **<br>Other customization options:**
 
-| Option                     | Description                                                                     | Default                    |
-|----------------------------|---------------------------------------------------------------------------------|----------------------------|
-| `setFixedScreen()`         | Fixed screen where the toasts will be shown (static)                            | `None`                     |
-| `setIconSeparatorWidth()`  | Width of the icon separator that separates the icon and text section            | `2`                        |
-| `setCloseButtonIcon()`     | Icon of the close button                                                        | `ToastIcon.CLOSE`          |
-| `setCloseButtonIconSize()` | Size of the close button icon                                                   | `QSize(10, 10)`            |
-| `setCloseButtonSize()`     | Size of the close button                                                        | `QSize(24, 24)`            |
-| `setStayOnTop()`           | Whether the toast stays on top of other windows even when they are focused      | `True`                     |
-| `setTextSectionSpacing()`  | Vertical spacing between the title and the text                                 | `8`                        |
-| `setMargins()`             | Margins around the whole toast content                                          | `QMargins(20, 18, 10, 18)` |
-| `setIconMargins()`         | Margins around the icon                                                         | `QMargins(0, 0, 15, 0)`    |
-| `setIconSectionMargins()`  | Margins around the icon section (the area with the icon and the icon separator) | `QMargins(0, 0, 15, 0)`    |
-| `setTextSectionMargins()`  | Margins around the text section (the area with the title and the text)          | `QMargins(0, 0, 15, 0)`    |
-| `setCloseButtonMargins()`  | Margins around the close button                                                 | `QMargins(0, -8, 0, -8)`   |
+| Option                        | Description                                                                     | Default                    |
+|-------------------------------|---------------------------------------------------------------------------------|----------------------------|
+| `setFixedScreen()`            | Fixed screen where the toasts will be shown (static)                            | `None`                     |
+| `setMovePositionWithWidget()` | Whether the toasts should move with widget if positioned relative to a widget   | `True`                     |
+| `setIconSeparatorWidth()`     | Width of the icon separator that separates the icon and text section            | `2`                        |
+| `setCloseButtonIcon()`        | Icon of the close button                                                        | `ToastIcon.CLOSE`          |
+| `setCloseButtonIconSize()`    | Size of the close button icon                                                   | `QSize(10, 10)`            |
+| `setCloseButtonSize()`        | Size of the close button                                                        | `QSize(24, 24)`            |
+| `setStayOnTop()`              | Whether the toast stays on top of other windows even when they are focused      | `True`                     |
+| `setTextSectionSpacing()`     | Vertical spacing between the title and the text                                 | `8`                        |
+| `setMargins()`                | Margins around the whole toast content                                          | `QMargins(20, 18, 10, 18)` |
+| `setIconMargins()`            | Margins around the icon                                                         | `QMargins(0, 0, 15, 0)`    |
+| `setIconSectionMargins()`     | Margins around the icon section (the area with the icon and the icon separator) | `QMargins(0, 0, 15, 0)`    |
+| `setTextSectionMargins()`     | Margins around the text section (the area with the title and the text)          | `QMargins(0, 0, 15, 0)`    |
+| `setCloseButtonMargins()`     | Margins around the close button                                                 | `QMargins(0, -8, 0, -8)`   |
 
 ## Demo
 https://github.com/niklashenning/pyqt-toast/assets/58544929/f4d7f4a4-6d69-4087-ae19-da54b6da499d
