@@ -250,20 +250,20 @@ class Toast(QDialog):
                     self.move(x, y + int(self.height() / 1.5) + predecessor_target_difference_y)
 
                 # Start fade down / up animation
-                self.pos_animation = QPropertyAnimation(self, b"pos")
-                self.pos_animation.setEndValue(QPoint(x, y))
-                self.pos_animation.setDuration(self.__fade_in_duration)
-                self.pos_animation.start()
+                self.__pos_animation = QPropertyAnimation(self, b"pos")
+                self.__pos_animation.setEndValue(QPoint(x, y))
+                self.__pos_animation.setDuration(self.__fade_in_duration)
+                self.__pos_animation.start()
             else:
                 self.move(x, y)
 
             # Fade in
             super().show()
-            self.fade_in_animation = QPropertyAnimation(self.__opacity_effect, b"opacity")
-            self.fade_in_animation.setDuration(self.__fade_in_duration)
-            self.fade_in_animation.setStartValue(0)
-            self.fade_in_animation.setEndValue(1)
-            self.fade_in_animation.start()
+            self.__fade_in_animation = QPropertyAnimation(self.__opacity_effect, b"opacity")
+            self.__fade_in_animation.setDuration(self.__fade_in_duration)
+            self.__fade_in_animation.setStartValue(0)
+            self.__fade_in_animation.setEndValue(1)
+            self.__fade_in_animation.start()
 
             # Update every other currently shown notification
             for toast in Toast.__currently_shown:
@@ -284,12 +284,12 @@ class Toast(QDialog):
     def __fade_out(self):
         """Start the fade out animation"""
 
-        self.fade_out_animation = QPropertyAnimation(self.__opacity_effect, b"opacity")
-        self.fade_out_animation.setDuration(self.__fade_out_duration)
-        self.fade_out_animation.setStartValue(1)
-        self.fade_out_animation.setEndValue(0)
-        self.fade_out_animation.finished.connect(self.__hide)
-        self.fade_out_animation.start()
+        self.__fade_out_animation = QPropertyAnimation(self.__opacity_effect, b"opacity")
+        self.__fade_out_animation.setDuration(self.__fade_out_duration)
+        self.__fade_out_animation.setStartValue(1)
+        self.__fade_out_animation.setEndValue(0)
+        self.__fade_out_animation.finished.connect(self.__hide)
+        self.__fade_out_animation.start()
 
     def __hide(self):
         """Hide the toast notification"""
@@ -338,10 +338,10 @@ class Toast(QDialog):
         position = QPoint(x, y)
 
         # Animate position change
-        self.pos_animation = QPropertyAnimation(self, b"pos")
-        self.pos_animation.setEndValue(position)
-        self.pos_animation.setDuration(UPDATE_POSITION_DURATION if animate else 0)
-        self.pos_animation.start()
+        self.__pos_animation = QPropertyAnimation(self, b"pos")
+        self.__pos_animation.setEndValue(position)
+        self.__pos_animation.setDuration(UPDATE_POSITION_DURATION if animate else 0)
+        self.__pos_animation.start()
 
     def __update_position_x(self, animate: bool = True):
         """Update the x position of the toast with an optional animation
@@ -353,10 +353,10 @@ class Toast(QDialog):
         position = QPoint(x, self.y())
 
         # Animate position change
-        self.pos_animation = QPropertyAnimation(self, b"pos")
-        self.pos_animation.setEndValue(position)
-        self.pos_animation.setDuration(UPDATE_POSITION_DURATION if animate else 0)
-        self.pos_animation.start()
+        self.__pos_animation = QPropertyAnimation(self, b"pos")
+        self.__pos_animation.setEndValue(position)
+        self.__pos_animation.setDuration(UPDATE_POSITION_DURATION if animate else 0)
+        self.__pos_animation.start()
 
     def __update_position_y(self, animate: bool = True):
         """Update the y position of the toast with an optional animation
@@ -368,10 +368,10 @@ class Toast(QDialog):
         position = QPoint(self.x(), y)
 
         # Animate position change
-        self.pos_animation = QPropertyAnimation(self, b"pos")
-        self.pos_animation.setEndValue(position)
-        self.pos_animation.setDuration(UPDATE_POSITION_DURATION if animate else 0)
-        self.pos_animation.start()
+        self.__pos_animation = QPropertyAnimation(self, b"pos")
+        self.__pos_animation.setEndValue(position)
+        self.__pos_animation.setDuration(UPDATE_POSITION_DURATION if animate else 0)
+        self.__pos_animation.start()
 
     def __get_bounds(self) -> QRect:
         """Get the bounds (QRect) of the target screen or widget
