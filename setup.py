@@ -15,7 +15,7 @@ setup(
     package_data={
         'pyqttoast.css': ['*.css'],
         'pyqttoast.icons': ['*.png'],
-        'pyqttoast.__pyinstaller': ['*.py']
+        'pyqttoast.hooks': ['*.py']
     },
     install_requires=[
         'QtPy>=2.4.1'
