@@ -2,19 +2,20 @@ from setuptools import setup, find_namespace_packages
 
 
 with open('README.md', 'r') as fh:
-    readme = "\n" + fh.read()
+    readme = '\n' + fh.read()
 
 setup(
     name='pyqt-toast-notification',
-    version='1.3.0',
+    version='1.3.1',
     author='Niklas Henning',
     author_email='business@niklashenning.com',
     license='MIT',
-    packages=find_namespace_packages(where="src"),
-    package_dir={"": "src"},
+    packages=find_namespace_packages(where='src'),
+    package_dir={'': 'src'},
     package_data={
-        "pyqttoast.css": ["*.css"],
-        "pyqttoast.icons": ["*.png"],
+        'pyqttoast.css': ['*.css'],
+        'pyqttoast.icons': ['*.png'],
+        'pyqttoast.hooks': ['*.py']
     },
     install_requires=[
         'QtPy>=2.4.1'
