@@ -107,6 +107,9 @@ toast.setShowIcon(True)           # Default: False
 
 # Or setting a custom icon:
 toast.setIcon(QPixmap('path/to/your/icon.png'))
+
+# If you want to show the icon without recoloring it, set the icon color to None:
+toast.setIconColor(None)  # Default: #5C5C5C
 ```
 > **AVAILABLE ICONS:** <br> `SUCCESS`, `WARNING`, `ERROR`, `INFORMATION`, `CLOSE`
 
