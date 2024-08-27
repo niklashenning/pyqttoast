@@ -1303,27 +1303,26 @@ class Toast(QDialog):
             return
         self.__text_color = color
 
-    def getIconColor(self) -> QColor:
+    def getIconColor(self) -> QColor | None:
         """Get the color of the icon
 
-        :return: icon color
+        :return: icon color (None if no color is set)
         """
 
         return self.__icon_color
 
-    def setIconColor(self, color: QColor):
+    def setIconColor(self, color: QColor | None):
         """Set the color of the icon
 
-        :param color: new icon color
+        :param color: new icon color (None if the icon should not be recolored)
         """
 
         if self.__used:
             return
 
         self.__icon_color = color
-        recolored_image = IconUtils.recolor_image(self.__icon_widget.icon().pixmap(
-                                                  self.__icon_widget.iconSize()).toImage(),
-                                                  color)
+        recolored_image = IconUtils.recolor_image(QIcon(self.__icon).pixmap(
+                                                  self.__icon_widget.iconSize()).toImage(), color)
         self.__icon_widget.setIcon(QIcon(QPixmap(recolored_image)))
 
     def getIconSeparatorColor(self) -> QColor:
@@ -1344,27 +1343,26 @@ class Toast(QDialog):
             return
         self.__icon_separator_color = color
 
-    def getCloseButtonIconColor(self) -> QColor:
+    def getCloseButtonIconColor(self) -> QColor | None:
         """Get the color of the close button icon
 
-        :return: color
+        :return: icon color (None if no color is set)
         """
 
         return self.__close_button_icon_color
 
-    def setCloseButtonIconColor(self, color: QColor):
+    def setCloseButtonIconColor(self, color: QColor | None):
         """Set the color of the close button icon
 
-        :param color: new color
+        :param color: new color (None if the icon should not be recolored)
         """
 
         if self.__used:
             return
 
         self.__close_button_icon_color = color
-        recolored_image = IconUtils.recolor_image(self.__close_button.icon().pixmap(
-                                                  self.__close_button.iconSize()).toImage(),
-                                                  color)
+        recolored_image = IconUtils.recolor_image(QIcon(self.__close_button_icon).pixmap(
+                                                  self.__close_button.iconSize()).toImage(), color)
         self.__close_button.setIcon(QIcon(QPixmap(recolored_image)))
 
     def getDurationBarColor(self) -> QColor:

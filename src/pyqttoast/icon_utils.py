@@ -25,13 +25,17 @@ class IconUtils:
             return QPixmap(OSUtils.get_current_directory() + '/icons/close.png')
 
     @staticmethod
-    def recolor_image(image: QImage, color: QColor):
+    def recolor_image(image: QImage, color: QColor | None):
         """Take an image and return a copy with the colors changed
 
         :param image: image to recolor
-        :param color: new color
+        :param color: new color (None if the image should not be recolored)
         :return: recolored image
         """
+
+        # Leave image as is if color is None
+        if color is None:
+            return image
 
         # Loop through every pixel
         for x in range(0, image.width()):
