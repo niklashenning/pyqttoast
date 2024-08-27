@@ -848,6 +848,11 @@ def test_set_colors(qtbot):
     assert toast.getCloseButtonIconColor() == QColor('#1fad96')
     assert toast.getDurationBarColor() == QColor('#cc640e')
 
+    toast.setIconColor(None)
+    toast.setCloseButtonIconColor(None)
+    assert toast.getIconColor() is None
+    assert toast.getCloseButtonIconColor() is None
+
 
 def test_set_fonts(qtbot):
     """Test setting the fonts of a toast"""
