@@ -29,7 +29,7 @@ class Toast(QDialog):
     # Close event
     closed = Signal()
 
-    def __init__(self, parent: QWidget = None):
+    def __init__(self, parent: QWidget | None = None):
         """Create a new Toast instance
 
         :param parent: the parent widget
