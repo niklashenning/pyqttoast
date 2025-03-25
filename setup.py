@@ -6,7 +6,7 @@ with open('README.md', 'r') as fh:
 
 setup(
     name='pyqt-toast-notification',
-    version='1.3.2',
+    version='1.3.3',
     author='Niklas Henning',
     author_email='business@niklashenning.com',
     license='MIT',

@@ -4,7 +4,7 @@ from qtpy.QtCore import Qt, QPropertyAnimation, QPoint, QTimer, QSize, QMargins,
 from qtpy.QtGui import QPixmap, QIcon, QFont, QFontMetrics
 from qtpy.QtWidgets import QDialog, QPushButton, QLabel, QGraphicsOpacityEffect, QWidget
 from .toast_enums import ToastPreset, ToastIcon, ToastPosition, ToastButtonAlignment
-from .os_utils import OSUtils
+from .utils import Utils
 from .icon_utils import IconUtils
 from .drop_shadow import DropShadow
 from .constants import *
@@ -76,6 +76,7 @@ class Toast(QDialog):
         self.__elapsed_time = 0
         self.__fading_out = False
         self.__used = False
+        self.__watched_widgets = []
 
         # Window settings
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
@@ -156,20 +157,25 @@ class Toast(QDialog):
         self.__duration_bar_timer.timeout.connect(self.__update_duration_bar)
 
         # Apply stylesheet
-        self.setStyleSheet(open(OSUtils.get_current_directory() + '/css/toast.css').read())
+        self.setStyleSheet(open(Utils.get_current_directory() + '/css/toast.css').read())
 
-        # Install event filter on widget if position relative to widget and moving with widget
+        # Install event filters if position relative to widget and moving with widget
         if Toast.__position_relative_to_widget and Toast.__move_position_with_widget:
             self.__install_widget_event_filter()
+            self.__install_watched_widgets_event_filters()
 
     def eventFilter(self, watched, event):
-        # Event is on widget, position is set to be relative to widget and moving with widget
-        if (Toast.__position_relative_to_widget and watched == Toast.__position_relative_to_widget
-                and Toast.__move_position_with_widget):
-            # If moved or resized, update toast position if shown
+        # If moved or resized, update toast position if shown
+        if Toast.__position_relative_to_widget and Toast.__move_position_with_widget:
             if event.type() == event.Type.Move or event.type() == event.Type.Resize:
-                if self in Toast.__currently_shown:
-                    self.__update_position_xy(animate=False)
+                if watched == Toast.__position_relative_to_widget or watched in self.__watched_widgets:
+                    if self in Toast.__currently_shown:
+                        self.__update_position_xy(animate=False)
+
+        # One of the parents changed or deleted
+        if event.type() == event.Type.ParentChange or event.type() == event.Type.DeferredDelete:
+            self.__install_watched_widgets_event_filters()
+
         return False
 
     def enterEvent(self, event):
@@ -385,7 +391,15 @@ class Toast(QDialog):
 
         # Calculate target screen / widget
         if Toast.__position_relative_to_widget is not None:
-            return Toast.__position_relative_to_widget.geometry()
+            top_level_parent = Utils.get_top_level_parent(Toast.__position_relative_to_widget)
+            if top_level_parent == Toast.__position_relative_to_widget:
+                return Toast.__position_relative_to_widget.geometry()
+
+            global_pos = top_level_parent.mapToGlobal(Toast.__position_relative_to_widget.pos())
+            return QRect(
+                global_pos.x(), global_pos.y(), Toast.__position_relative_to_widget.width(),
+                Toast.__position_relative_to_widget.height()
+            )
         elif Toast.__fixed_screen is not None:
             current_screen = Toast.__fixed_screen
         elif Toast.__always_on_main_screen or self.parent() is None:
@@ -801,6 +815,25 @@ class Toast(QDialog):
 
         if Toast.__position_relative_to_widget:
             Toast.__position_relative_to_widget.removeEventFilter(self)
+
+    def __remove_watched_widgets_event_filters(self):
+        """Remove installed event filters on watched widgets"""
+
+        for widget in self.__watched_widgets:
+            widget.removeEventFilter(self)
+        self.__watched_widgets.clear()
+
+    def __install_watched_widgets_event_filters(self):
+        """Install / reinstall event filters on watched widgets"""
+
+        self.__remove_watched_widgets_event_filters()
+
+        if Toast.__position_relative_to_widget is None:
+            return
+
+        self.__watched_widgets += Utils.get_parents(Toast.__position_relative_to_widget)
+        for widget in self.__watched_widgets:
+            widget.installEventFilter(self)
 
     def setFixedSize(self, size: QSize):
         """Set a fixed toast size
@@ -2133,6 +2166,7 @@ class Toast(QDialog):
             # Remove event filters
             for toast in Toast.__currently_shown + Toast.__queue:
                 toast.__remove_widget_event_filter()
+                toast.__remove_watched_widgets_event_filters()
 
         Toast.__position_relative_to_widget = widget
 
@@ -2140,6 +2174,7 @@ class Toast(QDialog):
             # Install event filters
             for toast in Toast.__currently_shown + Toast.__queue:
                 toast.__install_widget_event_filter()
+                toast.__install_watched_widgets_event_filters()
 
         Toast.__update_currently_showing_position_xy()
 
@@ -2165,10 +2200,12 @@ class Toast(QDialog):
             # Install event filters
             for toast in Toast.__currently_shown + Toast.__queue:
                 toast.__install_widget_event_filter()
+                toast.__install_watched_widgets_event_filters()
         else:
             # Remove event filters
             for toast in Toast.__currently_shown + Toast.__queue:
                 toast.__remove_widget_event_filter()
+                toast.__remove_watched_widgets_event_filters()
 
     @staticmethod
     def isAlwaysOnMainScreen() -> bool:
@@ -2275,6 +2312,10 @@ class Toast(QDialog):
         for toast in Toast.__currently_shown:
             toast.setVisible(False)
             toast.deleteLater()
+
+        # Remove event filters on watched widgets
+        for toast in Toast.__currently_shown + Toast.__queue:
+            toast.__remove_watched_widgets_event_filters()
 
         Toast.__currently_shown.clear()
         Toast.__queue.clear()

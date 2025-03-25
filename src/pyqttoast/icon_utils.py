@@ -1,6 +1,6 @@
 from qtpy.QtGui import QPixmap, QColor, QImage, qRgba
 from .toast_enums import ToastIcon
-from .os_utils import OSUtils
+from .utils import Utils
 
 
 class IconUtils:
@@ -14,15 +14,15 @@ class IconUtils:
         """
 
         if enum_icon == ToastIcon.SUCCESS:
-            return QPixmap(OSUtils.get_current_directory() + '/icons/success.png')
+            return QPixmap(Utils.get_current_directory() + '/icons/success.png')
         elif enum_icon == ToastIcon.WARNING:
-            return QPixmap(OSUtils.get_current_directory() + '/icons/warning.png')
+            return QPixmap(Utils.get_current_directory() + '/icons/warning.png')
         elif enum_icon == ToastIcon.ERROR:
-            return QPixmap(OSUtils.get_current_directory() + '/icons/error.png')
+            return QPixmap(Utils.get_current_directory() + '/icons/error.png')
         elif enum_icon == ToastIcon.INFORMATION:
-            return QPixmap(OSUtils.get_current_directory() + '/icons/information.png')
+            return QPixmap(Utils.get_current_directory() + '/icons/information.png')
         elif enum_icon == ToastIcon.CLOSE:
-            return QPixmap(OSUtils.get_current_directory() + '/icons/close.png')
+            return QPixmap(Utils.get_current_directory() + '/icons/close.png')
 
     @staticmethod
     def recolor_image(image: QImage, color: QColor | None):
