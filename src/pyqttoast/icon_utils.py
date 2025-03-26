@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from qtpy.QtGui import QPixmap, QColor, QImage, qRgba
 from .toast_enums import ToastIcon
 from .utils import Utils
